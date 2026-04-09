@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ragdoll Gaming Hub</title>
+    <title>Lumo Gaming Hub</title>
     <style>
         :root {
             --primary: #8a2be2;
@@ -14,11 +14,7 @@
             --text-muted: #bbb;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -30,7 +26,7 @@
             overflow-x: hidden;
         }
 
-        /* --- Header & Nav --- */
+        /* --- Header --- */
         header {
             background: rgba(13, 13, 20, 0.95);
             backdrop-filter: blur(10px);
@@ -53,27 +49,19 @@
             text-shadow: 0 0 10px var(--primary-glow);
         }
 
-        nav ul {
-            display: flex;
-            list-style: none;
-            gap: 2rem;
-        }
-
-        nav a {
-            color: var(--text-muted);
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 1.1rem;
-            transition: color 0.3s ease;
-            cursor: pointer;
-        }
-
-        nav a:hover, nav a.active {
+        .admin-btn {
+            background: transparent;
+            border: 1px solid var(--primary);
             color: var(--primary);
-            text-shadow: 0 0 8px var(--primary-glow);
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s;
         }
+        .admin-btn:hover { background: var(--primary); color: #fff; }
 
-        /* --- Main Container --- */
+        /* --- Main Content --- */
         main {
             flex: 1;
             padding: 2rem;
@@ -90,7 +78,7 @@
             color: #fff;
         }
 
-        /* --- Games Grid --- */
+        /* --- Game Grid --- */
         .games-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -121,384 +109,464 @@
             background: #222;
         }
 
-        .game-info {
-            padding: 1rem;
-        }
-
-        .game-title {
-            font-size: 1.1rem;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-            color: #fff;
-        }
-
-        .game-desc {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            line-height: 1.4;
-        }
-
-        /* --- Shows Section (TV) --- */
-        #shows-section {
-            display: none; /* Hidden by default */
-            flex-direction: column;
-            align-items: center;
-            width: 100%;
-        }
-
-        #shows-section.active {
-            display: flex;
-        }
-
-        .search-container {
-            width: 100%;
-            max-width: 600px;
-            margin-bottom: 2rem;
-            position: relative;
-        }
-
-        input[type='search'] {
-            width: 100%;
-            padding: 16px 24px;
-            font-size: 1.1rem;
-            border-radius: 50px;
+        .game-info { padding: 1rem; }
+        .game-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem; color: #fff; }
+        .game-desc { font-size: 0.85rem; color: var(--text-muted); line-height: 1.4; }
+        .delete-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 69, 69, 0.9);
             border: none;
-            outline: none;
-            background: rgba(28, 29, 41, 0.9);
-            color: #eee;
-            box-shadow: 0 0 15px rgba(138, 43, 226, 0.4);
-            transition: box-shadow 0.3s ease;
-        }
-
-        input[type='search']:focus {
-            box-shadow: 0 0 25px rgba(138, 43, 226, 0.8);
-        }
-
-        #results {
-            width: 100%;
-            max-width: 900px;
-            max-height: 400px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin-bottom: 2rem;
-            padding: 10px;
-            background: rgba(18, 18, 28, 0.6);
-            border-radius: 12px;
-            border: 1px solid rgba(138, 43, 226, 0.2);
-        }
-
-        .video-card {
-            display: flex;
-            align-items: center;
-            padding: 10px;
+            color: #fff;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
             cursor: pointer;
-            background: rgba(28, 29, 41, 0.7);
-            border-radius: 8px;
-            transition: background 0.2s;
-        }
-
-        .video-card:hover {
-            background: rgba(138, 43, 226, 0.2);
-        }
-
-        .video-thumb {
-            width: 120px;
-            height: 68px;
-            border-radius: 6px;
-            margin-right: 15px;
-            object-fit: cover;
-        }
-
-        .video-info {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .video-title {
             font-size: 1rem;
-            font-weight: 600;
-            color: #fff;
-            margin-bottom: 4px;
+            display: none;
+            z-index: 10;
         }
+        .game-card:hover .delete-btn { display: block; }
 
-        .video-channel {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-        }
-
-        #player {
+        /* --- Game Frame --- */
+        #game-frame-container {
+            display: none;
             width: 100%;
-            max-width: 900px;
-            aspect-ratio: 16 / 9;
-            background: #000;
+            height: 70vh;
             border-radius: 12px;
-            box-shadow: 0 0 30px rgba(138, 43, 226, 0.3);
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(138,43,226,0.3);
             position: relative;
+            background: #000;
+        }
+        
+        #game-frame-container.fullscreen {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 9999;
+            border-radius: 0; margin: 0;
         }
 
-        #player iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-            border-radius: 12px;
+        #game-frame { width: 100%; height: 100%; border: none; display: block; }
+
+        .fullscreen-btn {
+            position: absolute; top: 15px; right: 15px;
+            background: rgba(138, 43, 226, 0.8); border: none; color: #fff;
+            padding: 10px 15px; border-radius: 8px; cursor: pointer; z-index: 1000;
+            display: flex; align-items: center; gap: 5px;
+        }
+        .fullscreen-btn:hover { background: var(--primary); }
+        
+        .exit-fullscreen-btn {
+            position: absolute; top: 15px; right: 15px;
+            background: rgba(255, 69, 69, 0.8); border: none; color: #fff;
+            padding: 10px 15px; border-radius: 8px; cursor: pointer; z-index: 1001;
+            display: none;
+        }
+        #game-frame-container.fullscreen .exit-fullscreen-btn { display: flex; }
+        #game-frame-container.fullscreen .fullscreen-btn { display: none; }
+
+        /* --- Admin Panel --- */
+        #overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); z-index: 1999;
         }
 
-        #player p {
-            color: #666;
-            font-size: 1.2rem;
-        }
-
-        /* --- Footer --- */
-        footer {
-            text-align: center;
+        #admin-panel {
+            display: none;
+            position: fixed; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background: #1a1a24;
             padding: 2rem;
-            color: var(--text-muted);
-            font-size: 0.9rem;
-            border-top: 1px solid rgba(255,255,255,0.05);
+            border-radius: 12px;
+            border: 2px solid var(--primary);
+            z-index: 2000;
+            width: 90%; max-width: 500px;
+            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+        }
+        
+        #admin-panel h2 { margin-bottom: 1rem; color: var(--primary); }
+        #admin-panel input, #admin-panel textarea, #admin-panel select {
+            width: 100%; padding: 12px; margin-bottom: 12px;
+            background: #0d0d14; border: 1px solid #333; color: #fff; border-radius: 5px;
+            font-size: 1rem;
+        }
+        #admin-panel button {
+            background: var(--primary); color: #fff; border: none;
+            padding: 12px 20px; border-radius: 5px; cursor: pointer; width: 100%;
+            font-size: 1rem; margin-top: 5px;
+        }
+        #admin-panel button:hover { background: #6a1bb5; }
+        #admin-panel button.secondary {
+            background: #333; margin-top: 10px;
+        }
+        #admin-panel button.secondary:hover { background: #444; }
+        .close-admin {
+            position: absolute; top: 10px; right: 15px;
+            background: transparent; border: none; color: #fff; font-size: 1.8rem; cursor: pointer;
         }
 
-        /* --- Responsive --- */
-        @media (max-width: 768px) {
-            .games-grid {
-                grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-            }
-            nav ul {
-                gap: 1rem;
-            }
-            .logo {
-                font-size: 1.2rem;
-            }
+        .storage-info {
+            background: rgba(138, 43, 226, 0.1);
+            border: 1px solid var(--primary);
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            font-size: 0.85rem;
+        }
+
+        .file-upload-note {
+            background: rgba(255, 165, 0, 0.1);
+            border: 1px solid orange;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            font-size: 0.85rem;
+        }
+
+        /* --- Login Panel --- */
+        #login-panel {
+            display: none;
+            position: fixed; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background: #1a1a24;
+            padding: 2rem;
+            border-radius: 12px;
+            border: 2px solid var(--primary);
+            z-index: 2000;
+            width: 90%; max-width: 400px;
+            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+        }
+
+        /* --- Notification --- */
+        #notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--primary);
+            color: #fff;
+            padding: 15px 25px;
+            border-radius: 8px;
+            z-index: 3000;
+            display: none;
+            box-shadow: 0 0 20px rgba(138, 43, 226, 0.5);
         }
     </style>
 </head>
 <body>
 
     <header>
-        <div class="logo">Ragdoll Hub</div>
-        <nav>
-            <ul>
-                <li><a onclick="switchTab('games')" id="nav-games" class="active">Games</a></li>
-                <li><a onclick="switchTab('shows')" id="nav-shows">Shows</a></li>
-            </ul>
-        </nav>
+        <div class="logo">Lumo Gaming Hub</div>
+        <button class="admin-btn" onclick="showLogin()">⚙️ Admin</button>
     </header>
 
     <main>
-        <!-- GAMES SECTION -->
-        <div id="games-section">
-            <h2 class="section-title">Featured Games</h2>
-            <div class="games-grid">
-                <!-- Ragdoll Archers -->
-                <div class="game-card" onclick="loadGame('https://bitlifeonline.github.io/ragdoll-archers/')">
-                    <img src="rs/imgs/ragdoll-archers.jpg" alt="Ragdoll Archers" class="game-thumb" onerror="this.src='https://via.placeholder.com/220x140?text=Ragdoll+Archers'">
-                    <div class="game-info">
-                        <div class="game-title">Ragdoll Archers</div>
-                        <div class="game-desc">Precision archery with unique ragdoll physics.</div>
-                    </div>
-                </div>
-
-                <!-- Ragdoll Hit Unblocked -->
-                <div class="game-card" onclick="loadGame('https://freetoplayz.github.io/ragdoll-hit/')">
-                    <img src="rs/imgs/ragdoll-hit.jpg" alt="Ragdoll Hit" class="game-thumb" onerror="this.src='https://via.placeholder.com/220x140?text=Ragdoll+Hit'">
-                    <div class="game-info">
-                        <div class="game-title">Ragdoll Hit Unblocked</div>
-                        <div class="game-desc">Chaotic physics brawler. Unleash your inner warrior.</div>
-                    </div>
-                </div>
-
-                <!-- Stickman Hook -->
-                <div class="game-card" onclick="loadGame('https://stickman.pro/iframe/index.html')">
-                    <img src="rs/imgs/stickman-hook-min.png" alt="Stickman Hook" class="game-thumb" onerror="this.src='https://via.placeholder.com/220x140?text=Stickman+Hook'">
-                    <div class="game-info">
-                        <div class="game-title">Stickman Hook</div>
-                        <div class="game-desc">Swing through dynamic levels with a grappling hook.</div>
-                    </div>
-                </div>
-
-                <!-- Placeholder for other games mentioned in files -->
-                <div class="game-card" onclick="alert('Game coming soon!')">
-                    <img src="https://via.placeholder.com/220x140?text=Happy+Room" class="game-thumb">
-                    <div class="game-info">
-                        <div class="game-title">Happy Room</div>
-                        <div class="game-desc">Physics sandbox fun.</div>
-                    </div>
-                </div>
-
-                <div class="game-card" onclick="alert('Game coming soon!')">
-                    <img src="https://via.placeholder.com/220x140?text=Vex+8" class="game-thumb">
-                    <div class="game-info">
-                        <div class="game-title">Vex 8</div>
-                        <div class="game-desc">Challenging obstacle course platformer.</div>
-                    </div>
-                </div>
-
-                <div class="game-card" onclick="alert('Game coming soon!')">
-                    <img src="https://via.placeholder.com/220x140?text=Rooftop+Snipers" class="game-thumb">
-                    <div class="game-info">
-                        <div class="game-title">Rooftop Snipers</div>
-                        <div class="game-desc">Two-player chaotic shooting duel.</div>
-                    </div>
-                </div>
-            </div>
-            
-            <div id="game-frame-container" style="display:none; width: 100%; height: 70vh; border-radius: 12px; overflow: hidden; box-shadow: 0 0 20px rgba(138,43,226,0.3);">
-                <iframe id="game-frame" src="" frameborder="0" allowfullscreen></iframe>
-            </div>
+        <h2 class="section-title">🎮 Available Games</h2>
+        <div class="games-grid" id="games-grid">
+            <!-- Games will be injected here by JS -->
         </div>
-
-        <!-- SHOWS SECTION (TV) -->
-        <div id="shows-section">
-            <h2 class="section-title">Video Hub</h2>
-            
-            <div class="search-container">
-                <input type="search" id="searchInput" placeholder="Search for videos on YouTube..." autocomplete="off">
-            </div>
-
-            <div id="results" aria-live="polite"></div>
-
-            <div id="player">
-                <p>Select a video to start watching...</p>
-            </div>
+        
+        <div id="game-frame-container">
+            <button class="fullscreen-btn" onclick="toggleGameFullscreen()">
+                <svg viewBox="0 0 24 24" fill="currentColor" style="width:18px;height:18px;"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
+                Fullscreen
+            </button>
+            <button class="exit-fullscreen-btn" onclick="exitGameFullscreen()">
+                <svg viewBox="0 0 24 24" fill="currentColor" style="width:18px;height:18px;"><path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/></svg>
+                Exit
+            </button>
+            <iframe id="game-frame" src="" allowfullscreen></iframe>
         </div>
     </main>
 
-    <footer>
-        <p>&copy; 2026 Ragdoll Gaming Hub. All rights reserved.</p>
-    </footer>
+    <!-- Overlay -->
+    <div id="overlay" onclick="closeAllPanels()"></div>
+
+    <!-- Login Panel -->
+    <div id="login-panel">
+        <button class="close-admin" onclick="closeAllPanels()">&times;</button>
+        <h2>🔐 Admin Login</h2>
+        <input type="password" id="admin-password" placeholder="Enter password">
+        <button onclick="checkPassword()">Login</button>
+        <p style="margin-top: 15px; font-size: 0.85rem; color: var(--text-muted);">
+            Default password: <code>lumo2026</code> (change in code!)
+        </p>
+    </div>
+
+    <!-- Admin Panel -->
+    <div id="admin-panel">
+        <button class="close-admin" onclick="closeAllPanels()">&times;</button>
+        <h2>➕ Add New Game</h2>
+        
+        <div class="storage-info">
+            📊 Storage: <span id="storage-used">0</span> / 10 MB (browser limit)
+        </div>
+        
+        <div class="file-upload-note">
+            ⚠️ <strong>Note:</strong> For unlimited storage, upload game HTML files to GitHub Pages or itch.io, then paste the URL below.
+        </div>
+
+        <input type="text" id="game-title" placeholder="Game Title (e.g., Cookie Clicker)">
+        <input type="text" id="game-url" placeholder="Game URL (e.g., https://yourgame.github.io/game)">
+        <input type="text" id="game-thumbnail" placeholder="Thumbnail URL (optional)">
+        <textarea id="game-desc" rows="3" placeholder="Short description..."></textarea>
+        
+        <button onclick="addGame()">✅ Add Game</button>
+        <button class="secondary" onclick="exportGames()">📤 Export Games List</button>
+        <button class="secondary" onclick="importGames()">📥 Import Games List</button>
+        <button class="secondary" onclick="clearAllGames()" style="background: #c00;">🗑️ Delete All Games</button>
+    </div>
+
+    <!-- Hidden file input for import -->
+    <input type="file" id="import-file" accept=".json" style="display: none;" onchange="handleImport(this)">
+
+    <!-- Notification -->
+    <div id="notification"></div>
 
     <script>
-        // --- Tab Switching Logic ---
-        function switchTab(tab) {
-            const gamesSection = document.getElementById('games-section');
-            const showsSection = document.getElementById('shows-section');
-            const navGames = document.getElementById('nav-games');
-            const navShows = document.getElementById('nav-shows');
-            const gameFrameContainer = document.getElementById('game-frame-container');
+        // ================= CONFIGURATION =================
+        const ADMIN_PASSWORD = "lumo2026"; // CHANGE THIS!
+        // =================================================
 
-            if (tab === 'games') {
-                gamesSection.style.display = 'block';
-                showsSection.classList.remove('active');
-                navGames.classList.add('active');
-                navShows.classList.remove('active');
-                // Hide game frame if open
-                gameFrameContainer.style.display = 'none';
+        let isAdmin = false;
+        let games = [];
+
+        // Load games from localStorage on startup
+        function loadGames() {
+            const stored = localStorage.getItem('lumoGames');
+            if (stored) {
+                games = JSON.parse(stored);
             } else {
-                gamesSection.style.display = 'none';
-                showsSection.classList.add('active');
-                navShows.classList.add('active');
-                navGames.classList.remove('active');
+                // Default games
+                games = [
+                    {
+                        id: Date.now(),
+                        title: "1v1.lol",
+                        url: "https://docs-opensocial.googleusercontent.com/gadgets/ifr?url=https://cdn.jsdelivr.net/gh/ko1ov/to@1e8a949f89fcf2b110640c41a0705db01405d161/d7uf4.xml#",
+                        thumbnail: "https://via.placeholder.com/220x140?text=1v1.lol",
+                        description: "Building and shooting simulator."
+                    },
+                    {
+                        id: Date.now() + 1,
+                        title: "Ragdoll Archers",
+                        url: "https://bitlifeonline.github.io/ragdoll-archers/",
+                        thumbnail: "https://via.placeholder.com/220x140?text=Ragdoll+Archers",
+                        description: "Precision archery with unique ragdoll physics."
+                    }
+                ];
+                saveGames();
             }
+            renderGames();
         }
 
-        // --- Game Loading Logic ---
+        function saveGames() {
+            localStorage.setItem('lumoGames', JSON.stringify(games));
+            updateStorageInfo();
+        }
+
+        function renderGames() {
+            const grid = document.getElementById('games-grid');
+            grid.innerHTML = '';
+
+            games.forEach(game => {
+                const card = document.createElement('div');
+                card.className = 'game-card';
+                card.innerHTML = `
+                    <button class="delete-btn" onclick="deleteGame(${game.id})">×</button>
+                    <img src="${game.thumbnail || 'https://via.placeholder.com/220x140?text=No+Image'}" 
+                         alt="${game.title}" class="game-thumb" 
+                         onerror="this.src='https://via.placeholder.com/220x140?text=No+Image'">
+                    <div class="game-info">
+                        <div class="game-title">${game.title}</div>
+                        <div class="game-desc">${game.description || 'No description'}</div>
+                    </div>
+                `;
+                card.onclick = (e) => {
+                    if (!e.target.classList.contains('delete-btn')) {
+                        loadGame(game.url);
+                    }
+                };
+                grid.appendChild(card);
+            });
+        }
+
         function loadGame(url) {
             const container = document.getElementById('game-frame-container');
             const frame = document.getElementById('game-frame');
             frame.src = url;
             container.style.display = 'block';
-            // Scroll to game
             container.scrollIntoView({ behavior: 'smooth' });
         }
 
-        // --- YouTube TV Logic ---
-        const apiKey = 'AIzaSyCZu34x1u7ewgeqqmxYk96O7aqMo3uojqo'; // Note: Exposed key warning applies here
+        function addGame() {
+            const title = document.getElementById('game-title').value.trim();
+            const url = document.getElementById('game-url').value.trim();
+            const thumbnail = document.getElementById('game-thumbnail').value.trim();
+            const desc = document.getElementById('game-desc').value.trim();
 
-        async function searchYouTube(query) {
-            try {
-                const searchRes = await fetch(
-                    `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=10&q=$${encodeURIComponent(query)}&key=$${apiKey}`
-                );
-                const searchData = await searchRes.json();
-                if (!searchData.items) return [];
-
-                const videoIds = searchData.items.map(item => item.id.videoId).join(',');
-                
-                const videosRes = await fetch(
-                    `https://www.googleapis.com/youtube/v3/videos?part=status,snippet&id=$${videoIds}&key=$${apiKey}`
-                );
-                const videosData = await videosRes.json();
-                if (!videosData.items) return [];
-
-                return videosData.items
-                    .filter(video => video.status.embeddable && video.status.privacyStatus === 'public')
-                    .map(video => ({
-                        id: video.id,
-                        title: video.snippet.title,
-                        channel: video.snippet.channelTitle,
-                        thumbnail: video.snippet.thumbnails.medium.url,
-                        maxThumbnail: video.snippet.thumbnails.maxres?.url || video.snippet.thumbnails.high.url
-                    }));
-            } catch (error) {
-                console.error("Search error:", error);
-                return [];
-            }
-        }
-
-        function showResults(videos) {
-            const resultsEl = document.getElementById('results');
-            resultsEl.innerHTML = '';
-            
-            if (videos.length === 0) {
-                resultsEl.innerHTML = '<p style="color:#aaa; text-align:center; padding:10px;">No embeddable videos found.</p>';
+            if (!title || !url) {
+                showNotification('❌ Title and URL are required!', 'error');
                 return;
             }
 
-            videos.forEach(video => {
-                const card = document.createElement('div');
-                card.className = 'video-card';
-                card.innerHTML = `
-                    <img class="video-thumb" src="$${video.thumbnail}" alt="$${video.title}" />
-                    <div class="video-info">
-                        <div class="video-title">${video.title}</div>
-                        <div class="video-channel">${video.channel}</div>
-                    </div>
-                `;
-                card.onclick = () => playVideo(video);
-                resultsEl.appendChild(card);
-            });
+            const newGame = {
+                id: Date.now(),
+                title,
+                url,
+                thumbnail: thumbnail || 'https://via.placeholder.com/220x140?text=' + encodeURIComponent(title),
+                description: desc
+            };
+
+            games.push(newGame);
+            saveGames();
+            renderGames();
+            closeAllPanels();
+            showNotification('✅ Game added successfully!');
+            
+            // Clear form
+            document.getElementById('game-title').value = '';
+            document.getElementById('game-url').value = '';
+            document.getElementById('game-thumbnail').value = '';
+            document.getElementById('game-desc').value = '';
         }
 
-        function playVideo(video) {
-            const player = document.getElementById('player');
-            const results = document.getElementById('results');
-            
-            // Hide results
-            results.style.opacity = '0';
-            setTimeout(() => results.innerHTML = '', 300);
-
-            // Update Player
-            player.innerHTML = `
-                <iframe 
-                    src="https://www.youtube.com/embed/${video.id}?autoplay=1&controls=1" 
-                    allow="autoplay; encrypted-media" 
-                    allowfullscreen 
-                    title="${video.title}">
-                </iframe>
-            `;
+        function deleteGame(id) {
+            if (!confirm('Delete this game?')) return;
+            games = games.filter(g => g.id !== id);
+            saveGames();
+            renderGames();
+            showNotification('🗑️ Game deleted');
         }
 
-        // Search Event Listener
-        const searchInput = document.getElementById('searchInput');
-        let searchTimeout;
+        function clearAllGames() {
+            if (!confirm('Are you sure? This will delete ALL games!')) return;
+            games = [];
+            saveGames();
+            renderGames();
+            closeAllPanels();
+            showNotification('🗑️ All games deleted');
+        }
 
-        searchInput.addEventListener('input', (e) => {
-            clearTimeout(searchTimeout);
-            const query = e.target.value.trim();
-            
-            if (!query) {
-                document.getElementById('results').innerHTML = '';
-                return;
+        function exportGames() {
+            const dataStr = JSON.stringify(games, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'lumo-games-backup.json';
+            a.click();
+            URL.revokeObjectURL(url);
+            showNotification('📤 Games exported!');
+        }
+
+        function importGames() {
+            document.getElementById('import-file').click();
+        }
+
+        function handleImport(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (Array.isArray(imported)) {
+                        games = [...games, ...imported];
+                        saveGames();
+                        renderGames();
+                        showNotification(`📥 Imported ${imported.length} games!`);
+                    } else {
+                        showNotification('❌ Invalid file format', 'error');
+                    }
+                } catch (err) {
+                    showNotification('❌ Error reading file', 'error');
+                }
+            };
+            reader.readAsText(file);
+            input.value = '';
+        }
+
+        function updateStorageInfo() {
+            const used = new Blob([JSON.stringify(games)]).size;
+            const mb = (used / 1024 / 1024).toFixed(2);
+            document.getElementById('storage-used').textContent = mb + ' MB';
+        }
+
+        // ================= AUTH =================
+        function showLogin() {
+            if (isAdmin) {
+                showAdminPanel();
+            } else {
+                document.getElementById('overlay').style.display = 'block';
+                document.getElementById('login-panel').style.display = 'block';
             }
+        }
 
-            searchTimeout = setTimeout(() => {
-                searchYouTube(query).then(showResults);
-            }, 500);
+        function checkPassword() {
+            const input = document.getElementById('admin-password').value;
+            if (input === ADMIN_PASSWORD) {
+                isAdmin = true;
+                closeAllPanels();
+                showAdminPanel();
+                showNotification('✅ Logged in as admin');
+            } else {
+                showNotification('❌ Wrong password!', 'error');
+            }
+        }
+
+        function showAdminPanel() {
+            document.getElementById('overlay').style.display = 'block';
+            document.getElementById('admin-panel').style.display = 'block';
+            updateStorageInfo();
+        }
+
+        function closeAllPanels() {
+            document.getElementById('overlay').style.display = 'none';
+            document.getElementById('login-panel').style.display = 'none';
+            document.getElementById('admin-panel').style.display = 'none';
+        }
+
+        // ================= FULLSCREEN =================
+        function toggleGameFullscreen() {
+            const container = document.getElementById('game-frame-container');
+            container.classList.toggle('fullscreen');
+            
+            if (container.classList.contains('fullscreen')) {
+                if (container.requestFullscreen) container.requestFullscreen();
+                else if (container.webkitRequestFullscreen) container.webkitRequestFullscreen();
+                else if (container.msRequestFullscreen) container.msRequestFullscreen();
+            }
+        }
+
+        function exitGameFullscreen() {
+            const container = document.getElementById('game-frame-container');
+            container.classList.remove('fullscreen');
+            
+            if (document.exitFullscreen) document.exitFullscreen();
+            else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+            else if (document.msExitFullscreen) document.msExitFullscreen();
+        }
+
+        document.addEventListener('fullscreenchange', () => {
+            const container = document.getElementById('game-frame-container');
+            if (!document.fullscreenElement && container.classList.contains('fullscreen')) {
+                container.classList.remove('fullscreen');
+            }
         });
+
+        // ================= NOTIFICATIONS =================
+        function showNotification(message, type = 'success') {
+            const notif = document.getElementById('notification');
+            notif.textContent = message;
+            notif.style.background = type === 'error' ? '#c00' : 'var(--primary)';
+            notif.style.display = 'block';
+            setTimeout(() => {
+                notif.style.display = 'none';
+            }, 3000);
+        }
+
+        // Initialize
+        loadGames();
     </script>
 </body>
 </html>
