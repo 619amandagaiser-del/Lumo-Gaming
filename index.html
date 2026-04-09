@@ -3,627 +3,502 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lumo Gaming Hub</title>
+    <title>Ragdoll Gaming Hub</title>
     <style>
+        :root {
+            --primary: #8a2be2;
+            --primary-glow: rgba(138, 43, 226, 0.6);
+            --bg-dark: #0d0d14;
+            --card-bg: rgba(28, 29, 41, 0.8);
+            --text-main: #eee;
+            --text-muted: #bbb;
+        }
+
         * {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
         }
-        
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            color: #fff;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
             min-height: 100vh;
-            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
         }
-        
-        .container {
+
+        /* --- Header & Nav --- */
+        header {
+            background: rgba(13, 13, 20, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid rgba(138, 43, 226, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px var(--primary-glow);
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        nav a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: color 0.3s ease;
+            cursor: pointer;
+        }
+
+        nav a:hover, nav a.active {
+            color: var(--primary);
+            text-shadow: 0 0 8px var(--primary-glow);
+        }
+
+        /* --- Main Container --- */
+        main {
+            flex: 1;
+            padding: 2rem;
             max-width: 1200px;
             margin: 0 auto;
+            width: 100%;
         }
-        
-        h1 {
-            text-align: center;
-            margin-bottom: 30px;
-            font-size: 2.5em;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+
+        .section-title {
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid var(--primary);
+            padding-left: 1rem;
+            color: #fff;
         }
-        
-        .game-selector {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-bottom: 30px;
-            flex-wrap: wrap;
+
+        /* --- Games Grid --- */
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
         }
-        
-        .game-btn {
-            padding: 12px 24px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border: none;
-            border-radius: 8px;
-            color: white;
+
+        .game-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(138, 43, 226, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
             cursor: pointer;
-            font-size: 16px;
-            transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
         }
-        
-        .game-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+
+        .game-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0 20px var(--primary-glow);
+            border-color: var(--primary);
         }
-        
-        .game-btn.active {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+
+        .game-thumb {
+            width: 100%;
+            height: 140px;
+            object-fit: cover;
+            background: #222;
         }
-        
-        .game-container {
-            background: rgba(255,255,255,0.1);
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 20px;
-            display: none;
+
+        .game-info {
+            padding: 1rem;
         }
-        
-        .game-container.active {
-            display: block;
+
+        .game-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #fff;
         }
-        
-        canvas {
+
+        .game-desc {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        /* --- Shows Section (TV) --- */
+        #shows-section {
+            display: none; /* Hidden by default */
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+
+        #shows-section.active {
+            display: flex;
+        }
+
+        .search-container {
+            width: 100%;
+            max-width: 600px;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+
+        input[type='search'] {
+            width: 100%;
+            padding: 16px 24px;
+            font-size: 1.1rem;
+            border-radius: 50px;
+            border: none;
+            outline: none;
+            background: rgba(28, 29, 41, 0.9);
+            color: #eee;
+            box-shadow: 0 0 15px rgba(138, 43, 226, 0.4);
+            transition: box-shadow 0.3s ease;
+        }
+
+        input[type='search']:focus {
+            box-shadow: 0 0 25px rgba(138, 43, 226, 0.8);
+        }
+
+        #results {
+            width: 100%;
+            max-width: 900px;
+            max-height: 400px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 2rem;
+            padding: 10px;
+            background: rgba(18, 18, 28, 0.6);
+            border-radius: 12px;
+            border: 1px solid rgba(138, 43, 226, 0.2);
+        }
+
+        .video-card {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            cursor: pointer;
+            background: rgba(28, 29, 41, 0.7);
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+
+        .video-card:hover {
+            background: rgba(138, 43, 226, 0.2);
+        }
+
+        .video-thumb {
+            width: 120px;
+            height: 68px;
+            border-radius: 6px;
+            margin-right: 15px;
+            object-fit: cover;
+        }
+
+        .video-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .video-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+
+        .video-channel {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        #player {
+            width: 100%;
+            max-width: 900px;
+            aspect-ratio: 16 / 9;
             background: #000;
-            border-radius: 10px;
-            display: block;
-            margin: 0 auto;
+            border-radius: 12px;
+            box-shadow: 0 0 30px rgba(138, 43, 226, 0.3);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
         }
-        
-        .score-board {
-            text-align: center;
-            font-size: 1.5em;
-            margin: 15px 0;
-        }
-        
-        .controls {
-            text-align: center;
-            margin-top: 15px;
-            font-size: 0.9em;
-            opacity: 0.8;
-        }
-        
-        .start-btn {
-            display: block;
-            margin: 15px auto;
-            padding: 12px 30px;
-            background: #4CAF50;
+
+        #player iframe {
+            width: 100%;
+            height: 100%;
             border: none;
-            border-radius: 8px;
-            color: white;
-            font-size: 18px;
-            cursor: pointer;
+            border-radius: 12px;
         }
-        
-        .start-btn:hover {
-            background: #45a049;
+
+        #player p {
+            color: #666;
+            font-size: 1.2rem;
         }
-        
-        /* Snake Game */
-        #snakeCanvas {
-            width: 400px;
-            height: 400px;
+
+        /* --- Footer --- */
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            border-top: 1px solid rgba(255,255,255,0.05);
         }
-        
-        /* Pong Game */
-        #pongCanvas {
-            width: 600px;
-            height: 400px;
-        }
-        
-        /* Breakout Game */
-        #breakoutCanvas {
-            width: 600px;
-            height: 400px;
-        }
-        
-        /* Memory Game */
-        .memory-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
-            max-width: 400px;
-            margin: 0 auto;
-        }
-        
-        .memory-card {
-            aspect-ratio: 1;
-            background: #667eea;
-            border-radius: 8px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2em;
-            transition: transform 0.3s;
-        }
-        
-        .memory-card.flipped {
-            background: #f5576c;
-            transform: rotateY(180deg);
-        }
-        
-        /* Tic Tac Toe */
-        .ttt-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            max-width: 300px;
-            margin: 0 auto;
-        }
-        
-        .ttt-cell {
-            aspect-ratio: 1;
-            background: #667eea;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2.5em;
-            cursor: pointer;
-        }
-        
-        .hidden {
-            display: none !important;
+
+        /* --- Responsive --- */
+        @media (max-width: 768px) {
+            .games-grid {
+                grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            }
+            nav ul {
+                gap: 1rem;
+            }
+            .logo {
+                font-size: 1.2rem;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🎮 Lumo Gaming Hub</h1>
-        
-        <div class="game-selector">
-            <button class="game-btn active" onclick="showGame('snake')">Snake</button>
-            <button class="game-btn" onclick="showGame('pong')">Pong</button>
-            <button class="game-btn" onclick="showGame('breakout')">Breakout</button>
-            <button class="game-btn" onclick="showGame('memory')">Memory</button>
-            <button class="game-btn" onclick="showGame('ttt')">Tic Tac Toe</button>
+
+    <header>
+        <div class="logo">Ragdoll Hub</div>
+        <nav>
+            <ul>
+                <li><a onclick="switchTab('games')" id="nav-games" class="active">Games</a></li>
+                <li><a onclick="switchTab('shows')" id="nav-shows">Shows</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <!-- GAMES SECTION -->
+        <div id="games-section">
+            <h2 class="section-title">Featured Games</h2>
+            <div class="games-grid">
+                <!-- Ragdoll Archers -->
+                <div class="game-card" onclick="loadGame('https://bitlifeonline.github.io/ragdoll-archers/')">
+                    <img src="rs/imgs/ragdoll-archers.jpg" alt="Ragdoll Archers" class="game-thumb" onerror="this.src='https://via.placeholder.com/220x140?text=Ragdoll+Archers'">
+                    <div class="game-info">
+                        <div class="game-title">Ragdoll Archers</div>
+                        <div class="game-desc">Precision archery with unique ragdoll physics.</div>
+                    </div>
+                </div>
+
+                <!-- Ragdoll Hit Unblocked -->
+                <div class="game-card" onclick="loadGame('https://freetoplayz.github.io/ragdoll-hit/')">
+                    <img src="rs/imgs/ragdoll-hit.jpg" alt="Ragdoll Hit" class="game-thumb" onerror="this.src='https://via.placeholder.com/220x140?text=Ragdoll+Hit'">
+                    <div class="game-info">
+                        <div class="game-title">Ragdoll Hit Unblocked</div>
+                        <div class="game-desc">Chaotic physics brawler. Unleash your inner warrior.</div>
+                    </div>
+                </div>
+
+                <!-- Stickman Hook -->
+                <div class="game-card" onclick="loadGame('https://stickman.pro/iframe/index.html')">
+                    <img src="rs/imgs/stickman-hook-min.png" alt="Stickman Hook" class="game-thumb" onerror="this.src='https://via.placeholder.com/220x140?text=Stickman+Hook'">
+                    <div class="game-info">
+                        <div class="game-title">Stickman Hook</div>
+                        <div class="game-desc">Swing through dynamic levels with a grappling hook.</div>
+                    </div>
+                </div>
+
+                <!-- Placeholder for other games mentioned in files -->
+                <div class="game-card" onclick="alert('Game coming soon!')">
+                    <img src="https://via.placeholder.com/220x140?text=Happy+Room" class="game-thumb">
+                    <div class="game-info">
+                        <div class="game-title">Happy Room</div>
+                        <div class="game-desc">Physics sandbox fun.</div>
+                    </div>
+                </div>
+
+                <div class="game-card" onclick="alert('Game coming soon!')">
+                    <img src="https://via.placeholder.com/220x140?text=Vex+8" class="game-thumb">
+                    <div class="game-info">
+                        <div class="game-title">Vex 8</div>
+                        <div class="game-desc">Challenging obstacle course platformer.</div>
+                    </div>
+                </div>
+
+                <div class="game-card" onclick="alert('Game coming soon!')">
+                    <img src="https://via.placeholder.com/220x140?text=Rooftop+Snipers" class="game-thumb">
+                    <div class="game-info">
+                        <div class="game-title">Rooftop Snipers</div>
+                        <div class="game-desc">Two-player chaotic shooting duel.</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="game-frame-container" style="display:none; width: 100%; height: 70vh; border-radius: 12px; overflow: hidden; box-shadow: 0 0 20px rgba(138,43,226,0.3);">
+                <iframe id="game-frame" src="" frameborder="0" allowfullscreen></iframe>
+            </div>
         </div>
-        
-        <!-- Snake Game -->
-        <div id="snake" class="game-container active">
-            <h2 style="text-align:center;margin-bottom:15px;">🐍 Snake</h2>
-            <div class="score-board">Score: <span id="snakeScore">0</span></div>
-            <canvas id="snakeCanvas" width="400" height="400"></canvas>
-            <button class="start-btn" onclick="startSnake()">Start Game</button>
-            <div class="controls">Use Arrow Keys to move</div>
+
+        <!-- SHOWS SECTION (TV) -->
+        <div id="shows-section">
+            <h2 class="section-title">Video Hub</h2>
+            
+            <div class="search-container">
+                <input type="search" id="searchInput" placeholder="Search for videos on YouTube..." autocomplete="off">
+            </div>
+
+            <div id="results" aria-live="polite"></div>
+
+            <div id="player">
+                <p>Select a video to start watching...</p>
+            </div>
         </div>
-        
-        <!-- Pong Game -->
-        <div id="pong" class="game-container">
-            <h2 style="text-align:center;margin-bottom:15px;">🏓 Pong</h2>
-            <div class="score-board">Player: <span id="playerScore">0</span> | CPU: <span id="cpuScore">0</span></div>
-            <canvas id="pongCanvas" width="600" height="400"></canvas>
-            <button class="start-btn" onclick="startPong()">Start Game</button>
-            <div class="controls">Mouse to control paddle</div>
-        </div>
-        
-        <!-- Breakout Game -->
-        <div id="breakout" class="game-container">
-            <h2 style="text-align:center;margin-bottom:15px;">🧱 Breakout</h2>
-            <div class="score-board">Score: <span id="breakoutScore">0</span> | Lives: <span id="lives">3</span></div>
-            <canvas id="breakoutCanvas" width="600" height="400"></canvas>
-            <button class="start-btn" onclick="startBreakout()">Start Game</button>
-            <div class="controls">Mouse to control paddle</div>
-        </div>
-        
-        <!-- Memory Game -->
-        <div id="memory" class="game-container">
-            <h2 style="text-align:center;margin-bottom:15px;">🧠 Memory Match</h2>
-            <div class="score-board">Moves: <span id="memoryMoves">0</span></div>
-            <div class="memory-grid" id="memoryGrid"></div>
-            <button class="start-btn" onclick="initMemory()">New Game</button>
-        </div>
-        
-        <!-- Tic Tac Toe -->
-        <div id="ttt" class="game-container">
-            <h2 style="text-align:center;margin-bottom:15px;">❌⭕ Tic Tac Toe</h2>
-            <div class="score-board" id="tttStatus">Player X's Turn</div>
-            <div class="ttt-grid" id="tttGrid"></div>
-            <button class="start-btn" onclick="resetTTT()">Reset Game</button>
-        </div>
-    </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 Ragdoll Gaming Hub. All rights reserved.</p>
+    </footer>
 
     <script>
-        // Game switching
-        function showGame(gameId) {
-            document.querySelectorAll('.game-container').forEach(c => c.classList.remove('active'));
-            document.querySelectorAll('.game-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(gameId).classList.add('active');
-            event.target.classList.add('active');
-            
-            // Stop any running game loops
-            if (snakeInterval) clearInterval(snakeInterval);
-            if (pongInterval) cancelAnimationFrame(pongInterval);
-            if (breakoutInterval) cancelAnimationFrame(breakoutInterval);
-        }
+        // --- Tab Switching Logic ---
+        function switchTab(tab) {
+            const gamesSection = document.getElementById('games-section');
+            const showsSection = document.getElementById('shows-section');
+            const navGames = document.getElementById('nav-games');
+            const navShows = document.getElementById('nav-shows');
+            const gameFrameContainer = document.getElementById('game-frame-container');
 
-        // ============ SNAKE GAME ============
-        const snakeCanvas = document.getElementById('snakeCanvas');
-        const snakeCtx = snakeCanvas.getContext('2d');
-        const gridSize = 20;
-        let snake = [{x: 10, y: 10}];
-        let food = {};
-        let direction = {x: 0, y: 0};
-        let snakeScore = 0;
-        let snakeInterval = null;
-
-        function startSnake() {
-            if (snakeInterval) clearInterval(snakeInterval);
-            snake = [{x: 10, y: 10}];
-            direction = {x: 1, y: 0};
-            snakeScore = 0;
-            document.getElementById('snakeScore').textContent = '0';
-            spawnFood();
-            snakeInterval = setInterval(updateSnake, 100);
-        }
-
-        function spawnFood() {
-            food = {
-                x: Math.floor(Math.random() * 20),
-                y: Math.floor(Math.random() * 20)
-            };
-        }
-
-        function updateSnake() {
-            const head = {x: snake[0].x + direction.x, y: snake[0].y + direction.y};
-            
-            if (head.x < 0 || head.x >= 20 || head.y < 0 || head.y >= 20 || 
-                snake.some(s => s.x === head.x && s.y === head.y)) {
-                clearInterval(snakeInterval);
-                alert('Game Over! Score: ' + snakeScore);
-                return;
-            }
-            
-            snake.unshift(head);
-            
-            if (head.x === food.x && head.y === food.y) {
-                snakeScore += 10;
-                document.getElementById('snakeScore').textContent = snakeScore;
-                spawnFood();
+            if (tab === 'games') {
+                gamesSection.style.display = 'block';
+                showsSection.classList.remove('active');
+                navGames.classList.add('active');
+                navShows.classList.remove('active');
+                // Hide game frame if open
+                gameFrameContainer.style.display = 'none';
             } else {
-                snake.pop();
-            }
-            
-            drawSnake();
-        }
-
-        function drawSnake() {
-            snakeCtx.fillStyle = '#000';
-            snakeCtx.fillRect(0, 0, 400, 400);
-            
-            snakeCtx.fillStyle = '#4CAF50';
-            snake.forEach(segment => {
-                snakeCtx.fillRect(segment.x * gridSize, segment.y * gridSize, gridSize - 2, gridSize - 2);
-            });
-            
-            snakeCtx.fillStyle = '#FF5722';
-            snakeCtx.fillRect(food.x * gridSize, food.y * gridSize, gridSize - 2, gridSize - 2);
-        }
-
-        document.addEventListener('keydown', e => {
-            if (!document.getElementById('snake').classList.contains('active')) return;
-            
-            switch(e.key) {
-                case 'ArrowUp': if (direction.y !== 1) direction = {x: 0, y: -1}; break;
-                case 'ArrowDown': if (direction.y !== -1) direction = {x: 0, y: 1}; break;
-                case 'ArrowLeft': if (direction.x !== 1) direction = {x: -1, y: 0}; break;
-                case 'ArrowRight': if (direction.x !== -1) direction = {x: 1, y: 0}; break;
-            }
-        });
-
-        // ============ PONG GAME ============
-        const pongCanvas = document.getElementById('pongCanvas');
-        const pongCtx = pongCanvas.getContext('2d');
-        let playerY = 150, cpuY = 150;
-        let ball = {x: 300, y: 200, dx: 5, dy: 5, size: 10};
-        let playerScore = 0, cpuScore = 0;
-        let pongInterval = null;
-
-        function startPong() {
-            if (pongInterval) cancelAnimationFrame(pongInterval);
-            playerY = 150;
-            cpuY = 150;
-            ball = {x: 300, y: 200, dx: 5, dy: 5, size: 10};
-            playerScore = 0;
-            cpuScore = 0;
-            document.getElementById('playerScore').textContent = '0';
-            document.getElementById('cpuScore').textContent = '0';
-            pongLoop();
-        }
-
-        function pongLoop() {
-            updatePong();
-            drawPong();
-            pongInterval = requestAnimationFrame(pongLoop);
-        }
-
-        function updatePong() {
-            ball.x += ball.dx;
-            ball.y += ball.dy;
-            
-            if (ball.y <= 0 || ball.y >= 400) ball.dy *= -1;
-            
-            if (ball.x <= 20 && ball.y >= playerY && ball.y <= playerY + 80) {
-                ball.dx *= -1;
-            }
-            
-            if (ball.x >= 580 && ball.y >= cpuY && ball.y <= cpuY + 80) {
-                ball.dx *= -1;
-            }
-            
-            if (ball.x < 0) {
-                cpuScore++;
-                document.getElementById('cpuScore').textContent = cpuScore;
-                resetBall();
-            }
-            
-            if (ball.x > 600) {
-                playerScore++;
-                document.getElementById('playerScore').textContent = playerScore;
-                resetBall();
-            }
-            
-            cpuY += (ball.y - 200 - cpuY) * 0.1;
-        }
-
-        function resetBall() {
-            ball = {x: 300, y: 200, dx: 5 * (Math.random() > 0.5 ? 1 : -1), dy: 5, size: 10};
-        }
-
-        function drawPong() {
-            pongCtx.fillStyle = '#000';
-            pongCtx.fillRect(0, 0, 600, 400);
-            
-            pongCtx.fillStyle = '#FFF';
-            pongCtx.fillRect(0, playerY, 20, 80);
-            pongCtx.fillRect(580, cpuY, 20, 80);
-            pongCtx.beginPath();
-            pongCtx.arc(ball.x, ball.y, ball.size, 0, Math.PI * 2);
-            pongCtx.fill();
-        }
-
-        pongCanvas.addEventListener('mousemove', e => {
-            if (!document.getElementById('pong').classList.contains('active')) return;
-            const rect = pongCanvas.getBoundingClientRect();
-            playerY = e.clientY - rect.top - 40;
-        });
-
-        // ============ BREAKOUT GAME ============
-        const breakoutCanvas = document.getElementById('breakoutCanvas');
-        const breakoutCtx = breakoutCanvas.getContext('2d');
-        let paddle = {x: 250, width: 100, height: 10};
-        let breakoutBall = {x: 300, y: 350, dx: 4, dy: -4, size: 8};
-        let bricks = [];
-        let breakoutScore = 0;
-        let lives = 3;
-        let breakoutInterval = null;
-
-        function startBreakout() {
-            if (breakoutInterval) cancelAnimationFrame(breakoutInterval);
-            paddle = {x: 250, width: 100, height: 10};
-            breakoutBall = {x: 300, y: 350, dx: 4, dy: -4, size: 8};
-            breakoutScore = 0;
-            lives = 3;
-            document.getElementById('breakoutScore').textContent = '0';
-            document.getElementById('lives').textContent = '3';
-            createBricks();
-            breakoutLoop();
-        }
-
-        function createBricks() {
-            bricks = [];
-            for (let row = 0; row < 5; row++) {
-                for (let col = 0; col < 10; col++) {
-                    bricks.push({
-                        x: col * 60 + 5,
-                        y: row * 25 + 30,
-                        width: 50,
-                        height: 20,
-                        active: true
-                    });
-                }
+                gamesSection.style.display = 'none';
+                showsSection.classList.add('active');
+                navShows.classList.add('active');
+                navGames.classList.remove('active');
             }
         }
 
-        function breakoutLoop() {
-            updateBreakout();
-            drawBreakout();
-            breakoutInterval = requestAnimationFrame(breakoutLoop);
+        // --- Game Loading Logic ---
+        function loadGame(url) {
+            const container = document.getElementById('game-frame-container');
+            const frame = document.getElementById('game-frame');
+            frame.src = url;
+            container.style.display = 'block';
+            // Scroll to game
+            container.scrollIntoView({ behavior: 'smooth' });
         }
 
-        function updateBreakout() {
-            breakoutBall.x += breakoutBall.dx;
-            breakoutBall.y += breakoutBall.dy;
-            
-            if (breakoutBall.x <= 0 || breakoutBall.x >= 600) breakoutBall.dx *= -1;
-            if (breakoutBall.y <= 0) breakoutBall.dy *= -1;
-            
-            if (breakoutBall.y >= 390 && breakoutBall.x >= paddle.x && breakoutBall.x <= paddle.x + paddle.width) {
-                breakoutBall.dy *= -1;
-            }
-            
-            if (breakoutBall.y > 400) {
-                lives--;
-                document.getElementById('lives').textContent = lives;
-                if (lives <= 0) {
-                    cancelAnimationFrame(breakoutInterval);
-                    alert('Game Over! Score: ' + breakoutScore);
-                    return;
-                }
-                breakoutBall = {x: 300, y: 350, dx: 4, dy: -4, size: 8};
-            }
-            
-            bricks.forEach(brick => {
-                if (brick.active &&
-                    breakoutBall.x > brick.x && breakoutBall.x < brick.x + brick.width &&
-                    breakoutBall.y > brick.y && breakoutBall.y < brick.y + brick.height) {
-                    brick.active = false;
-                    breakoutScore += 10;
-                    document.getElementById('breakoutScore').textContent = breakoutScore;
-                    breakoutBall.dy *= -1;
-                }
-            });
-        }
+        // --- YouTube TV Logic ---
+        const apiKey = 'AIzaSyCZu34x1u7ewgeqqmxYk96O7aqMo3uojqo'; // Note: Exposed key warning applies here
 
-        function drawBreakout() {
-            breakoutCtx.fillStyle = '#000';
-            breakoutCtx.fillRect(0, 0, 600, 400);
-            
-            breakoutCtx.fillStyle = '#4CAF50';
-            breakoutCtx.fillRect(paddle.x, 380, paddle.width, paddle.height);
-            
-            breakoutCtx.beginPath();
-            breakoutCtx.arc(breakoutBall.x, breakoutBall.y, breakoutBall.size, 0, Math.PI * 2);
-            breakoutCtx.fillStyle = '#FF5722';
-            breakoutCtx.fill();
-            
-            const colors = ['#FF5722', '#FF9800', '#FFC107', '#4CAF50', '#2196F3'];
-            bricks.forEach((brick, i) => {
-                if (brick.active) {
-                    breakoutCtx.fillStyle = colors[Math.floor(i / 10) % colors.length];
-                    breakoutCtx.fillRect(brick.x, brick.y, brick.width, brick.height);
-                }
-            });
-        }
+        async function searchYouTube(query) {
+            try {
+                const searchRes = await fetch(
+                    `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=10&q=$${encodeURIComponent(query)}&key=$${apiKey}`
+                );
+                const searchData = await searchRes.json();
+                if (!searchData.items) return [];
 
-        breakoutCanvas.addEventListener('mousemove', e => {
-            if (!document.getElementById('breakout').classList.contains('active')) return;
-            const rect = breakoutCanvas.getBoundingClientRect();
-            paddle.x = e.clientX - rect.left - paddle.width / 2;
-        });
-
-        // ============ MEMORY GAME ============
-        const emojis = ['🎮', '🎯', '🎲', '🎳', '🎪', '🎨', '🎭', '🎬'];
-        let memoryCards = [];
-        let flippedCards = [];
-        let matchedPairs = 0;
-        let memoryMoves = 0;
-
-        function initMemory() {
-            const grid = document.getElementById('memoryGrid');
-            grid.innerHTML = '';
-            memoryCards = [...emojis, ...emojis].sort(() => Math.random() - 0.5);
-            flippedCards = [];
-            matchedPairs = 0;
-            memoryMoves = 0;
-            document.getElementById('memoryMoves').textContent = '0';
-            
-            memoryCards.forEach((emoji, index) => {
-                const card = document.createElement('div');
-                card.className = 'memory-card';
-                card.dataset.index = index;
-                card.dataset.emoji = emoji;
-                card.textContent = '?';
-                card.onclick = () => flipCard(card);
-                grid.appendChild(card);
-            });
-        }
-
-        function flipCard(card) {
-            if (flippedCards.length >= 2 || card.classList.contains('flipped')) return;
-            
-            card.classList.add('flipped');
-            card.textContent = card.dataset.emoji;
-            flippedCards.push(card);
-            
-            if (flippedCards.length === 2) {
-                memoryMoves++;
-                document.getElementById('memoryMoves').textContent = memoryMoves;
+                const videoIds = searchData.items.map(item => item.id.videoId).join(',');
                 
-                setTimeout(() => {
-                    if (flippedCards[0].dataset.emoji === flippedCards[1].dataset.emoji) {
-                        matchedPairs++;
-                        flippedCards = [];
-                        if (matchedPairs === 8) {
-                            setTimeout(() => alert('Congratulations! You won in ' + memoryMoves + ' moves!'), 500);
-                        }
-                    } else {
-                        flippedCards.forEach(c => {
-                            c.classList.remove('flipped');
-                            c.textContent = '?';
-                        });
-                        flippedCards = [];
-                    }
-                }, 1000);
+                const videosRes = await fetch(
+                    `https://www.googleapis.com/youtube/v3/videos?part=status,snippet&id=$${videoIds}&key=$${apiKey}`
+                );
+                const videosData = await videosRes.json();
+                if (!videosData.items) return [];
+
+                return videosData.items
+                    .filter(video => video.status.embeddable && video.status.privacyStatus === 'public')
+                    .map(video => ({
+                        id: video.id,
+                        title: video.snippet.title,
+                        channel: video.snippet.channelTitle,
+                        thumbnail: video.snippet.thumbnails.medium.url,
+                        maxThumbnail: video.snippet.thumbnails.maxres?.url || video.snippet.thumbnails.high.url
+                    }));
+            } catch (error) {
+                console.error("Search error:", error);
+                return [];
             }
         }
 
-        // ============ TIC TAC TOE ============
-        let tttBoard = ['', '', '', '', '', '', '', '', ''];
-        let currentPlayer = 'X';
-        let gameActive = true;
-
-        function initTTT() {
-            const grid = document.getElementById('tttGrid');
-            grid.innerHTML = '';
-            tttBoard = ['', '', '', '', '', '', '', '', ''];
-            currentPlayer = 'X';
-            gameActive = true;
-            document.getElementById('tttStatus').textContent = "Player X's Turn";
+        function showResults(videos) {
+            const resultsEl = document.getElementById('results');
+            resultsEl.innerHTML = '';
             
-            for (let i = 0; i < 9; i++) {
-                const cell = document.createElement('div');
-                cell.className = 'ttt-cell';
-                cell.dataset.index = i;
-                cell.onclick = () => playTTT(i);
-                grid.appendChild(cell);
-            }
-        }
-
-        function playTTT(index) {
-            if (!gameActive || tttBoard[index] !== '') return;
-            
-            tttBoard[index] = currentPlayer;
-            const cells = document.querySelectorAll('.ttt-cell');
-            cells[index].textContent = currentPlayer;
-            
-            if (checkTTTWin()) {
-                document.getElementById('tttStatus').textContent = `Player ${currentPlayer} Wins!`;
-                gameActive = false;
+            if (videos.length === 0) {
+                resultsEl.innerHTML = '<p style="color:#aaa; text-align:center; padding:10px;">No embeddable videos found.</p>';
                 return;
             }
-            
-            if (!tttBoard.includes('')) {
-                document.getElementById('tttStatus').textContent = "It's a Draw!";
-                gameActive = false;
-                return;
-            }
-            
-            currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
-            document.getElementById('tttStatus').textContent = `Player ${currentPlayer}'s Turn`;
-        }
 
-        function checkTTTWin() {
-            const wins = [
-                [0,1,2], [3,4,5], [6,7,8],
-                [0,3,6], [1,4,7], [2,5,8],
-                [0,4,8], [2,4,6]
-            ];
-            
-            return wins.some(combo => {
-                return combo.every(i => tttBoard[i] === currentPlayer);
+            videos.forEach(video => {
+                const card = document.createElement('div');
+                card.className = 'video-card';
+                card.innerHTML = `
+                    <img class="video-thumb" src="$${video.thumbnail}" alt="$${video.title}" />
+                    <div class="video-info">
+                        <div class="video-title">${video.title}</div>
+                        <div class="video-channel">${video.channel}</div>
+                    </div>
+                `;
+                card.onclick = () => playVideo(video);
+                resultsEl.appendChild(card);
             });
         }
 
-        function resetTTT() {
-            initTTT();
+        function playVideo(video) {
+            const player = document.getElementById('player');
+            const results = document.getElementById('results');
+            
+            // Hide results
+            results.style.opacity = '0';
+            setTimeout(() => results.innerHTML = '', 300);
+
+            // Update Player
+            player.innerHTML = `
+                <iframe 
+                    src="https://www.youtube.com/embed/${video.id}?autoplay=1&controls=1" 
+                    allow="autoplay; encrypted-media" 
+                    allowfullscreen 
+                    title="${video.title}">
+                </iframe>
+            `;
         }
 
-        // Initialize
-        initMemory();
-        initTTT();
-        drawSnake();
-        drawPong();
-        drawBreakout();
+        // Search Event Listener
+        const searchInput = document.getElementById('searchInput');
+        let searchTimeout;
+
+        searchInput.addEventListener('input', (e) => {
+            clearTimeout(searchTimeout);
+            const query = e.target.value.trim();
+            
+            if (!query) {
+                document.getElementById('results').innerHTML = '';
+                return;
+            }
+
+            searchTimeout = setTimeout(() => {
+                searchYouTube(query).then(showResults);
+            }, 500);
+        });
     </script>
 </body>
 </html>
