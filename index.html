@@ -49,6 +49,30 @@
             text-shadow: 0 0 10px var(--primary-glow);
         }
 
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #666;
+        }
+
+        .status-dot.loading { background: #ffa500; animation: pulse 1s infinite; }
+        .status-dot.success { background: #00ff00; }
+        .status-dot.error { background: #ff0000; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
         .admin-btn {
             background: transparent;
             border: 1px solid var(--primary);
@@ -76,7 +100,21 @@
             border-left: 4px solid var(--primary);
             padding-left: 1rem;
             color: #fff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
+
+        .refresh-btn {
+            background: var(--primary);
+            border: none;
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        .refresh-btn:hover { background: #6a1bb5; }
 
         /* --- Game Grid --- */
         .games-grid {
@@ -112,22 +150,17 @@
         .game-info { padding: 1rem; }
         .game-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem; color: #fff; }
         .game-desc { font-size: 0.85rem; color: var(--text-muted); line-height: 1.4; }
-        .delete-btn {
+        .game-category {
             position: absolute;
             top: 10px;
-            right: 10px;
-            background: rgba(255, 69, 69, 0.9);
-            border: none;
+            left: 10px;
+            background: rgba(138, 43, 226, 0.8);
             color: #fff;
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 1rem;
-            display: none;
-            z-index: 10;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            text-transform: uppercase;
         }
-        .game-card:hover .delete-btn { display: block; }
 
         /* --- Game Frame --- */
         #game-frame-container {
@@ -165,76 +198,34 @@
         #game-frame-container.fullscreen .exit-fullscreen-btn { display: flex; }
         #game-frame-container.fullscreen .fullscreen-btn { display: none; }
 
-        /* --- Admin Panel --- */
-        #overlay {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85); z-index: 1999;
+        /* --- Loading State --- */
+        #loading-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(13, 13, 20, 0.95);
+            z-index: 5000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
         }
 
-        #admin-panel {
-            display: none;
-            position: fixed; top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            background: #1a1a24;
-            padding: 2rem;
-            border-radius: 12px;
-            border: 2px solid var(--primary);
-            z-index: 2000;
-            width: 90%; max-width: 500px;
-            box-shadow: 0 0 50px rgba(0,0,0,0.8);
-        }
-        
-        #admin-panel h2 { margin-bottom: 1rem; color: var(--primary); }
-        #admin-panel input, #admin-panel textarea, #admin-panel select {
-            width: 100%; padding: 12px; margin-bottom: 12px;
-            background: #0d0d14; border: 1px solid #333; color: #fff; border-radius: 5px;
-            font-size: 1rem;
-        }
-        #admin-panel button {
-            background: var(--primary); color: #fff; border: none;
-            padding: 12px 20px; border-radius: 5px; cursor: pointer; width: 100%;
-            font-size: 1rem; margin-top: 5px;
-        }
-        #admin-panel button:hover { background: #6a1bb5; }
-        #admin-panel button.secondary {
-            background: #333; margin-top: 10px;
-        }
-        #admin-panel button.secondary:hover { background: #444; }
-        .close-admin {
-            position: absolute; top: 10px; right: 15px;
-            background: transparent; border: none; color: #fff; font-size: 1.8rem; cursor: pointer;
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(138, 43, 226, 0.2);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
         }
 
-        .storage-info {
-            background: rgba(138, 43, 226, 0.1);
-            border: 1px solid var(--primary);
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 15px;
-            font-size: 0.85rem;
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
 
-        .file-upload-note {
-            background: rgba(255, 165, 0, 0.1);
-            border: 1px solid orange;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 15px;
-            font-size: 0.85rem;
-        }
-
-        /* --- Login Panel --- */
-        #login-panel {
-            display: none;
-            position: fixed; top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            background: #1a1a24;
-            padding: 2rem;
-            border-radius: 12px;
-            border: 2px solid var(--primary);
-            z-index: 2000;
-            width: 90%; max-width: 400px;
-            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+        #loading-text {
+            margin-top: 20px;
+            color: var(--text-muted);
         }
 
         /* --- Notification --- */
@@ -254,13 +245,28 @@
 </head>
 <body>
 
+    <!-- Loading Overlay -->
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+        <p id="loading-text">Loading games from GitHub...</p>
+    </div>
+
     <header>
         <div class="logo">Lumo Gaming Hub</div>
-        <button class="admin-btn" onclick="showLogin()">⚙️ Admin</button>
+        <div style="display: flex; gap: 15px; align-items: center;">
+            <div class="status-indicator">
+                <div class="status-dot" id="status-dot"></div>
+                <span id="status-text">Connecting...</span>
+            </div>
+            <button class="admin-btn" onclick="openGitHubLink()">🔗 GitHub</button>
+        </div>
     </header>
 
     <main>
-        <h2 class="section-title">🎮 Available Games</h2>
+        <h2 class="section-title">
+            🎮 Available Games
+            <button class="refresh-btn" onclick="refreshGames()">🔄 Refresh</button>
+        </h2>
         <div class="games-grid" id="games-grid">
             <!-- Games will be injected here by JS -->
         </div>
@@ -278,100 +284,96 @@
         </div>
     </main>
 
-    <!-- Overlay -->
-    <div id="overlay" onclick="closeAllPanels()"></div>
-
-    <!-- Login Panel -->
-    <div id="login-panel">
-        <button class="close-admin" onclick="closeAllPanels()">&times;</button>
-        <h2>🔐 Admin Login</h2>
-        <input type="password" id="admin-password" placeholder="Enter password">
-        <button onclick="checkPassword()">Login</button>
-        <p style="margin-top: 15px; font-size: 0.85rem; color: var(--text-muted);">
-            Default password: <code>lumo2026</code> (change in code!)
-        </p>
-    </div>
-
-    <!-- Admin Panel -->
-    <div id="admin-panel">
-        <button class="close-admin" onclick="closeAllPanels()">&times;</button>
-        <h2>➕ Add New Game</h2>
-        
-        <div class="storage-info">
-            📊 Storage: <span id="storage-used">0</span> / 10 MB (browser limit)
-        </div>
-        
-        <div class="file-upload-note">
-            ⚠️ <strong>Note:</strong> For unlimited storage, upload game HTML files to GitHub Pages or itch.io, then paste the URL below.
-        </div>
-
-        <input type="text" id="game-title" placeholder="Game Title (e.g., Cookie Clicker)">
-        <input type="text" id="game-url" placeholder="Game URL (e.g., https://yourgame.github.io/game)">
-        <input type="text" id="game-thumbnail" placeholder="Thumbnail URL (optional)">
-        <textarea id="game-desc" rows="3" placeholder="Short description..."></textarea>
-        
-        <button onclick="addGame()">✅ Add Game</button>
-        <button class="secondary" onclick="exportGames()">📤 Export Games List</button>
-        <button class="secondary" onclick="importGames()">📥 Import Games List</button>
-        <button class="secondary" onclick="clearAllGames()" style="background: #c00;">🗑️ Delete All Games</button>
-    </div>
-
-    <!-- Hidden file input for import -->
-    <input type="file" id="import-file" accept=".json" style="display: none;" onchange="handleImport(this)">
-
     <!-- Notification -->
     <div id="notification"></div>
 
     <script>
         // ================= CONFIGURATION =================
-        const ADMIN_PASSWORD = "lumo2026"; // CHANGE THIS!
+        // Replace with YOUR GitHub username and repo name
+        const GITHUB_USERNAME = 'your-username';
+        const GITHUB_REPO = 'lumo-games-db';
+        const GITHUB_BRANCH = 'main';
+        const GITHUB_FILE = 'games-data.json';
         // =================================================
 
-        let isAdmin = false;
+        // Construct the raw GitHub URL
+        const GAMES_API_URL = `https://raw.githubusercontent.com/${GITHUB_USERNAME}/${GITHUB_REPO}/${GITHUB_BRANCH}/${GITHUB_FILE}`;
+
         let games = [];
 
-        // Load games from localStorage on startup
-        function loadGames() {
-            const stored = localStorage.getItem('lumoGames');
-            if (stored) {
-                games = JSON.parse(stored);
-            } else {
-                // Default games
-                games = [
-                    {
-                        id: Date.now(),
-                        title: "1v1.lol",
-                        url: "https://docs-opensocial.googleusercontent.com/gadgets/ifr?url=https://cdn.jsdelivr.net/gh/ko1ov/to@1e8a949f89fcf2b110640c41a0705db01405d161/d7uf4.xml#",
-                        thumbnail: "https://via.placeholder.com/220x140?text=1v1.lol",
-                        description: "Building and shooting simulator."
-                    },
-                    {
-                        id: Date.now() + 1,
-                        title: "Ragdoll Archers",
-                        url: "https://bitlifeonline.github.io/ragdoll-archers/",
-                        thumbnail: "https://via.placeholder.com/220x140?text=Ragdoll+Archers",
-                        description: "Precision archery with unique ragdoll physics."
-                    }
-                ];
-                saveGames();
-            }
-            renderGames();
-        }
+        // Load games from GitHub on startup
+        async function loadGamesFromGitHub() {
+            const loadingOverlay = document.getElementById('loading-overlay');
+            const statusDot = document.getElementById('status-dot');
+            const statusText = document.getElementById('status-text');
 
-        function saveGames() {
-            localStorage.setItem('lumoGames', JSON.stringify(games));
-            updateStorageInfo();
+            statusDot.className = 'status-dot loading';
+            statusText.textContent = 'Fetching from GitHub...';
+
+            try {
+                const response = await fetch(GAMES_API_URL);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                
+                if (data.games && Array.isArray(data.games)) {
+                    games = data.games;
+                    renderGames();
+                    
+                    statusDot.className = 'status-dot success';
+                    statusText.textContent = `${games.length} games loaded`;
+                    
+                    setTimeout(() => {
+                        loadingOverlay.style.display = 'none';
+                    }, 500);
+                    
+                    showNotification(`✅ Loaded ${games.length} games from GitHub`);
+                } else {
+                    throw new Error('Invalid data format');
+                }
+            } catch (error) {
+                console.error('Error loading games:', error);
+                statusDot.className = 'status-dot error';
+                statusText.textContent = 'Connection failed';
+                
+                // Fallback to cached/local games if available
+                const cached = localStorage.getItem('lumoGamesCache');
+                if (cached) {
+                    games = JSON.parse(cached);
+                    renderGames();
+                    loadingOverlay.style.display = 'none';
+                    showNotification('⚠️ Using cached games (GitHub unavailable)', 'warning');
+                } else {
+                    loadingOverlay.innerHTML = `
+                        <div style="color: #ff0000; text-align: center;">
+                            <h2>❌ Failed to load games</h2>
+                            <p>${error.message}</p>
+                            <p style="margin-top: 15px;">Check your GitHub configuration:</p>
+                            <code style="background: #222; padding: 10px; display: block; margin: 10px 0;">${GAMES_API_URL}</code>
+                            <button onclick="location.reload()" style="margin-top: 15px; padding: 10px 20px; background: var(--primary); color: #fff; border: none; border-radius: 5px; cursor: pointer;">Retry</button>
+                        </div>
+                    `;
+                }
+            }
         }
 
         function renderGames() {
             const grid = document.getElementById('games-grid');
             grid.innerHTML = '';
 
+            if (games.length === 0) {
+                grid.innerHTML = '<p style="color: var(--text-muted); grid-column: 1/-1; text-align: center;">No games available. Add games to your GitHub repository!</p>';
+                return;
+            }
+
             games.forEach(game => {
                 const card = document.createElement('div');
                 card.className = 'game-card';
                 card.innerHTML = `
-                    <button class="delete-btn" onclick="deleteGame(${game.id})">×</button>
+                    ${game.category ? `<span class="game-category">${game.category}</span>` : ''}
                     <img src="${game.thumbnail || 'https://via.placeholder.com/220x140?text=No+Image'}" 
                          alt="${game.title}" class="game-thumb" 
                          onerror="this.src='https://via.placeholder.com/220x140?text=No+Image'">
@@ -380,11 +382,7 @@
                         <div class="game-desc">${game.description || 'No description'}</div>
                     </div>
                 `;
-                card.onclick = (e) => {
-                    if (!e.target.classList.contains('delete-btn')) {
-                        loadGame(game.url);
-                    }
-                };
+                card.onclick = () => loadGame(game.url);
                 grid.appendChild(card);
             });
         }
@@ -397,133 +395,14 @@
             container.scrollIntoView({ behavior: 'smooth' });
         }
 
-        function addGame() {
-            const title = document.getElementById('game-title').value.trim();
-            const url = document.getElementById('game-url').value.trim();
-            const thumbnail = document.getElementById('game-thumbnail').value.trim();
-            const desc = document.getElementById('game-desc').value.trim();
-
-            if (!title || !url) {
-                showNotification('❌ Title and URL are required!', 'error');
-                return;
-            }
-
-            const newGame = {
-                id: Date.now(),
-                title,
-                url,
-                thumbnail: thumbnail || 'https://via.placeholder.com/220x140?text=' + encodeURIComponent(title),
-                description: desc
-            };
-
-            games.push(newGame);
-            saveGames();
-            renderGames();
-            closeAllPanels();
-            showNotification('✅ Game added successfully!');
-            
-            // Clear form
-            document.getElementById('game-title').value = '';
-            document.getElementById('game-url').value = '';
-            document.getElementById('game-thumbnail').value = '';
-            document.getElementById('game-desc').value = '';
+        function refreshGames() {
+            showNotification('🔄 Refreshing games...');
+            loadGamesFromGitHub();
         }
 
-        function deleteGame(id) {
-            if (!confirm('Delete this game?')) return;
-            games = games.filter(g => g.id !== id);
-            saveGames();
-            renderGames();
-            showNotification('🗑️ Game deleted');
-        }
-
-        function clearAllGames() {
-            if (!confirm('Are you sure? This will delete ALL games!')) return;
-            games = [];
-            saveGames();
-            renderGames();
-            closeAllPanels();
-            showNotification('🗑️ All games deleted');
-        }
-
-        function exportGames() {
-            const dataStr = JSON.stringify(games, null, 2);
-            const blob = new Blob([dataStr], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'lumo-games-backup.json';
-            a.click();
-            URL.revokeObjectURL(url);
-            showNotification('📤 Games exported!');
-        }
-
-        function importGames() {
-            document.getElementById('import-file').click();
-        }
-
-        function handleImport(input) {
-            const file = input.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const imported = JSON.parse(e.target.result);
-                    if (Array.isArray(imported)) {
-                        games = [...games, ...imported];
-                        saveGames();
-                        renderGames();
-                        showNotification(`📥 Imported ${imported.length} games!`);
-                    } else {
-                        showNotification('❌ Invalid file format', 'error');
-                    }
-                } catch (err) {
-                    showNotification('❌ Error reading file', 'error');
-                }
-            };
-            reader.readAsText(file);
-            input.value = '';
-        }
-
-        function updateStorageInfo() {
-            const used = new Blob([JSON.stringify(games)]).size;
-            const mb = (used / 1024 / 1024).toFixed(2);
-            document.getElementById('storage-used').textContent = mb + ' MB';
-        }
-
-        // ================= AUTH =================
-        function showLogin() {
-            if (isAdmin) {
-                showAdminPanel();
-            } else {
-                document.getElementById('overlay').style.display = 'block';
-                document.getElementById('login-panel').style.display = 'block';
-            }
-        }
-
-        function checkPassword() {
-            const input = document.getElementById('admin-password').value;
-            if (input === ADMIN_PASSWORD) {
-                isAdmin = true;
-                closeAllPanels();
-                showAdminPanel();
-                showNotification('✅ Logged in as admin');
-            } else {
-                showNotification('❌ Wrong password!', 'error');
-            }
-        }
-
-        function showAdminPanel() {
-            document.getElementById('overlay').style.display = 'block';
-            document.getElementById('admin-panel').style.display = 'block';
-            updateStorageInfo();
-        }
-
-        function closeAllPanels() {
-            document.getElementById('overlay').style.display = 'none';
-            document.getElementById('login-panel').style.display = 'none';
-            document.getElementById('admin-panel').style.display = 'none';
+        function openGitHubLink() {
+            const githubUrl = `https://github.com/${GITHUB_USERNAME}/${GITHUB_REPO}`;
+            window.open(githubUrl, '_blank');
         }
 
         // ================= FULLSCREEN =================
@@ -558,7 +437,7 @@
         function showNotification(message, type = 'success') {
             const notif = document.getElementById('notification');
             notif.textContent = message;
-            notif.style.background = type === 'error' ? '#c00' : 'var(--primary)';
+            notif.style.background = type === 'error' ? '#c00' : type === 'warning' ? '#ffa500' : 'var(--primary)';
             notif.style.display = 'block';
             setTimeout(() => {
                 notif.style.display = 'none';
@@ -566,7 +445,7 @@
         }
 
         // Initialize
-        loadGames();
+        loadGamesFromGitHub();
     </script>
 </body>
 </html>
