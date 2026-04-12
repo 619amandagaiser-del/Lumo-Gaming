@@ -1,451 +1,490 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lumo Gaming Hub</title>
-    <style>
-        :root {
-            --primary: #8a2be2;
-            --primary-glow: rgba(138, 43, 226, 0.6);
-            --bg-dark: #0d0d14;
-            --card-bg: rgba(28, 29, 41, 0.8);
-            --text-main: #eee;
-            --text-muted: #bbb;
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { 
+  Gamepad2, 
+  BookOpen, 
+  Timer, 
+  CheckCircle2, 
+  Trophy, 
+  Settings, 
+  Music, 
+  Pause, 
+  Play, 
+  RotateCcw,
+  Sword,
+  Scroll,
+  Zap,
+  Flame,
+  ChevronUp,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Maximize2,
+  Minimize2
+} from 'lucide-react';
+
+const App = () => {
+  // --- STATE ---
+  const [mode, setMode] = useState('study'); // 'study' or 'game'
+  const [xp, setXp] = useState(() => Number(localStorage.getItem('hub_xp')) || 0);
+  const [level, setLevel] = useState(() => Math.floor(xp / 100) + 1);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  
+  // Timer State
+  const [timeLeft, setTimeLeft] = useState(25 * 60);
+  const [isActive, setIsActive] = useState(false);
+  
+  // Tasks State
+  const [tasks, setTasks] = useState(() => {
+    const saved = localStorage.getItem('hub_tasks');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [newTask, setNewTask] = useState('');
+
+  // Snake Game State
+  const [snake, setSnake] = useState([{ x: 10, y: 10 }]);
+  const [food, setFood] = useState({ x: 5, y: 5 });
+  const [direction, setDirection] = useState({ x: 0, y: -1 });
+  const [isGameOver, setIsGameOver] = useState(false);
+  const [gameScore, setGameScore] = useState(0);
+
+  const containerRef = useRef(null);
+
+  // --- EFFECTS ---
+  
+  // Persistence
+  useEffect(() => {
+    localStorage.setItem('hub_xp', xp.toString());
+    setLevel(Math.floor(xp / 100) + 1);
+  }, [xp]);
+
+  useEffect(() => {
+    localStorage.setItem('hub_tasks', JSON.stringify(tasks));
+  }, [tasks]);
+
+  // Fullscreen Listener
+  useEffect(() => {
+    const handleFsChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFsChange);
+    return () => document.removeEventListener('fullscreenchange', handleFsChange);
+  }, []);
+
+  // Timer Logic
+  useEffect(() => {
+    let interval = null;
+    if (isActive && timeLeft > 0) {
+      interval = setInterval(() => {
+        setTimeLeft((prev) => prev - 1);
+      }, 1000);
+    } else if (timeLeft === 0) {
+      setIsActive(false);
+      gainXp(50);
+      setTimeLeft(25 * 60);
+    }
+    return () => clearInterval(interval);
+  }, [isActive, timeLeft]);
+
+  // Snake Game Logic
+  const moveSnake = useCallback(() => {
+    if (isGameOver || mode === 'study') return;
+
+    const newSnake = [...snake];
+    const head = { x: newSnake[0].x + direction.x, y: newSnake[0].y + direction.y };
+
+    // Wall collision
+    if (head.x < 0 || head.x >= 20 || head.y < 0 || head.y >= 20) {
+      setIsGameOver(true);
+      return;
+    }
+
+    // Self collision
+    if (newSnake.some(segment => segment.x === head.x && segment.y === head.y)) {
+      setIsGameOver(true);
+      return;
+    }
+
+    newSnake.unshift(head);
+
+    // Food collision
+    if (head.x === food.x && head.y === food.y) {
+      setGameScore(prev => prev + 1);
+      gainXp(5);
+      setFood({
+        x: Math.floor(Math.random() * 20),
+        y: Math.floor(Math.random() * 20)
+      });
+    } else {
+      newSnake.pop();
+    }
+
+    setSnake(newSnake);
+  }, [snake, direction, food, isGameOver, mode]);
+
+  useEffect(() => {
+    const interval = setInterval(moveSnake, 150);
+    return () => clearInterval(interval);
+  }, [moveSnake]);
+
+  // Key Listeners
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (mode === 'game') {
+        switch (e.key) {
+          case 'ArrowUp': if (direction.y !== 1) setDirection({ x: 0, y: -1 }); break;
+          case 'ArrowDown': if (direction.y !== -1) setDirection({ x: 0, y: 1 }); break;
+          case 'ArrowLeft': if (direction.x !== 1) setDirection({ x: -1, y: 0 }); break;
+          case 'ArrowRight': if (direction.x !== -1) setDirection({ x: 1, y: 0 }); break;
         }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [direction, mode]);
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+  // --- ACTIONS ---
+  const gainXp = (amount) => {
+    setXp(prev => prev + amount);
+  };
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-dark);
-            color: var(--text-main);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow-x: hidden;
-        }
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      containerRef.current.requestFullscreen().catch(err => {
+        console.error(`Error attempting to enable full-screen mode: ${err.message}`);
+      });
+    } else {
+      document.exitFullscreen();
+    }
+  };
 
-        /* --- Header --- */
-        header {
-            background: rgba(13, 13, 20, 0.95);
-            backdrop-filter: blur(10px);
-            padding: 1rem 2rem;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            border-bottom: 1px solid rgba(138, 43, 226, 0.2);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+  const toggleTimer = () => setIsActive(!isActive);
+  const resetTimer = () => {
+    setIsActive(false);
+    setTimeLeft(25 * 60);
+  };
 
-        .logo {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--primary);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            text-shadow: 0 0 10px var(--primary-glow);
-        }
+  const addTask = (e) => {
+    e.preventDefault();
+    if (!newTask.trim()) return;
+    const taskObj = { id: Date.now(), text: newTask, completed: false, type: mode === 'study' ? 'Quest' : 'Mission' };
+    setTasks([taskObj, ...tasks]);
+    setNewTask('');
+  };
 
-        .status-indicator {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.85rem;
-            color: var(--text-muted);
-        }
+  const completeTask = (id) => {
+    setTasks(tasks.map(t => {
+      if (t.id === id && !t.completed) {
+        gainXp(20);
+        return { ...t, completed: true };
+      }
+      return t;
+    }));
+  };
 
-        .status-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: #666;
-        }
+  const resetGame = () => {
+    setSnake([{ x: 10, y: 10 }]);
+    setDirection({ x: 0, y: -1 });
+    setIsGameOver(false);
+    setGameScore(0);
+  };
 
-        .status-dot.loading { background: #ffa500; animation: pulse 1s infinite; }
-        .status-dot.success { background: #00ff00; }
-        .status-dot.error { background: #ff0000; }
+  const formatTime = (seconds) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s < 10 ? '0' : ''}${s}`;
+  };
 
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
+  // --- THEMES ---
+  const isStudy = mode === 'study';
+  const themeClass = isStudy 
+    ? "bg-slate-50 text-slate-900" 
+    : "bg-zinc-950 text-zinc-100";
+  
+  const accentColor = isStudy ? "bg-indigo-600" : "bg-rose-600";
+  const cardBg = isStudy ? "bg-white border-slate-200" : "bg-zinc-900 border-zinc-800";
 
-        .admin-btn {
-            background: transparent;
-            border: 1px solid var(--primary);
-            color: var(--primary);
-            padding: 8px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            transition: all 0.3s;
-        }
-        .admin-btn:hover { background: var(--primary); color: #fff; }
+  return (
+    <div 
+      ref={containerRef}
+      className={`min-h-screen transition-colors duration-500 font-sans ${themeClass} ${isFullscreen ? 'p-0' : ''}`}
+    >
+      {/* Navigation / Header */}
+      <nav className={`sticky top-0 z-50 border-b p-4 flex justify-between items-center ${cardBg} ${isFullscreen ? 'bg-opacity-95 backdrop-blur-md' : ''}`}>
+        <div className="flex items-center gap-2">
+          <div className={`p-2 rounded-lg ${accentColor} text-white`}>
+            {isStudy ? <BookOpen size={24} /> : <Gamepad2 size={24} />}
+          </div>
+          <h1 className="text-xl font-bold tracking-tight">
+            NEXUS <span className={isStudy ? "text-indigo-600" : "text-rose-600"}>{mode.toUpperCase()}</span>
+          </h1>
+        </div>
 
-        /* --- Main Content --- */
-        main {
-            flex: 1;
-            padding: 2rem;
-            max-width: 1200px;
-            margin: 0 auto;
-            width: 100%;
-        }
-
-        .section-title {
-            font-size: 2rem;
-            margin-bottom: 1.5rem;
-            border-left: 4px solid var(--primary);
-            padding-left: 1rem;
-            color: #fff;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .refresh-btn {
-            background: var(--primary);
-            border: none;
-            color: #fff;
-            padding: 8px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.9rem;
-        }
-        .refresh-btn:hover { background: #6a1bb5; }
-
-        /* --- Game Grid --- */
-        .games-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 3rem;
-        }
-
-        .game-card {
-            background: var(--card-bg);
-            border-radius: 12px;
-            overflow: hidden;
-            border: 1px solid rgba(138, 43, 226, 0.2);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            cursor: pointer;
-            position: relative;
-        }
-
-        .game-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 0 20px var(--primary-glow);
-            border-color: var(--primary);
-        }
-
-        .game-thumb {
-            width: 100%;
-            height: 140px;
-            object-fit: cover;
-            background: #222;
-        }
-
-        .game-info { padding: 1rem; }
-        .game-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem; color: #fff; }
-        .game-desc { font-size: 0.85rem; color: var(--text-muted); line-height: 1.4; }
-        .game-category {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            background: rgba(138, 43, 226, 0.8);
-            color: #fff;
-            padding: 4px 10px;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-        }
-
-        /* --- Game Frame --- */
-        #game-frame-container {
-            display: none;
-            width: 100%;
-            height: 70vh;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 0 20px rgba(138,43,226,0.3);
-            position: relative;
-            background: #000;
-        }
-        
-        #game-frame-container.fullscreen {
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 9999;
-            border-radius: 0; margin: 0;
-        }
-
-        #game-frame { width: 100%; height: 100%; border: none; display: block; }
-
-        .fullscreen-btn {
-            position: absolute; top: 15px; right: 15px;
-            background: rgba(138, 43, 226, 0.8); border: none; color: #fff;
-            padding: 10px 15px; border-radius: 8px; cursor: pointer; z-index: 1000;
-            display: flex; align-items: center; gap: 5px;
-        }
-        .fullscreen-btn:hover { background: var(--primary); }
-        
-        .exit-fullscreen-btn {
-            position: absolute; top: 15px; right: 15px;
-            background: rgba(255, 69, 69, 0.8); border: none; color: #fff;
-            padding: 10px 15px; border-radius: 8px; cursor: pointer; z-index: 1001;
-            display: none;
-        }
-        #game-frame-container.fullscreen .exit-fullscreen-btn { display: flex; }
-        #game-frame-container.fullscreen .fullscreen-btn { display: none; }
-
-        /* --- Loading State --- */
-        #loading-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(13, 13, 20, 0.95);
-            z-index: 5000;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .spinner {
-            width: 60px;
-            height: 60px;
-            border: 4px solid rgba(138, 43, 226, 0.2);
-            border-top-color: var(--primary);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        #loading-text {
-            margin-top: 20px;
-            color: var(--text-muted);
-        }
-
-        /* --- Notification --- */
-        #notification {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: var(--primary);
-            color: #fff;
-            padding: 15px 25px;
-            border-radius: 8px;
-            z-index: 3000;
-            display: none;
-            box-shadow: 0 0 20px rgba(138, 43, 226, 0.5);
-        }
-    </style>
-</head>
-<body>
-
-    <!-- Loading Overlay -->
-    <div id="loading-overlay">
-        <div class="spinner"></div>
-        <p id="loading-text">Loading games from GitHub...</p>
-    </div>
-
-    <header>
-        <div class="logo">Lumo Gaming Hub</div>
-        <div style="display: flex; gap: 15px; align-items: center;">
-            <div class="status-indicator">
-                <div class="status-dot" id="status-dot"></div>
-                <span id="status-text">Connecting...</span>
+        <div className="flex items-center gap-4 md:gap-6">
+          {/* XP Bar */}
+          <div className="hidden md:flex flex-col items-end gap-1">
+            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest opacity-70">
+              <Zap size={12} className="text-yellow-500" /> LVL {level} — {xp % 100}/100 XP
             </div>
-            <button class="admin-btn" onclick="openGitHubLink()">🔗 GitHub</button>
-        </div>
-    </header>
+            <div className="w-48 h-2 bg-gray-200 rounded-full overflow-hidden dark:bg-zinc-800">
+              <div 
+                className={`h-full transition-all duration-1000 ${accentColor}`}
+                style={{ width: `${xp % 100}%` }}
+              />
+            </div>
+          </div>
 
-    <main>
-        <h2 class="section-title">
-            🎮 Available Games
-            <button class="refresh-btn" onclick="refreshGames()">🔄 Refresh</button>
-        </h2>
-        <div class="games-grid" id="games-grid">
-            <!-- Games will be injected here by JS -->
+          {/* Fullscreen Toggle */}
+          <button 
+            onClick={toggleFullscreen}
+            title="Toggle Fullscreen"
+            className={`p-2 rounded-xl transition-colors ${isStudy ? 'bg-slate-100 hover:bg-slate-200 text-slate-600' : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-400'}`}
+          >
+            {isFullscreen ? <Minimize2 size={20} /> : <Maximize2 size={20} />}
+          </button>
+
+          {/* Mode Switcher */}
+          <button 
+            onClick={() => setMode(isStudy ? 'game' : 'study')}
+            className={`relative flex items-center p-1 rounded-full w-16 md:w-20 h-8 md:h-10 transition-colors ${isStudy ? 'bg-slate-200' : 'bg-zinc-800'}`}
+          >
+            <div className={`absolute w-6 h-6 md:w-8 md:h-8 rounded-full shadow-md flex items-center justify-center transition-all transform ${isStudy ? 'translate-x-0 bg-white text-indigo-600' : 'translate-x-8 md:translate-x-10 bg-zinc-700 text-rose-500'}`}>
+              {isStudy ? <BookOpen size={14} /> : <Gamepad2 size={14} />}
+            </div>
+          </button>
         </div>
+      </nav>
+
+      {/* Main Content */}
+      <main className={`max-w-6xl mx-auto p-4 md:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8 ${isFullscreen ? 'pt-12' : ''}`}>
         
-        <div id="game-frame-container">
-            <button class="fullscreen-btn" onclick="toggleGameFullscreen()">
-                <svg viewBox="0 0 24 24" fill="currentColor" style="width:18px;height:18px;"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
-                Fullscreen
-            </button>
-            <button class="exit-fullscreen-btn" onclick="exitGameFullscreen()">
-                <svg viewBox="0 0 24 24" fill="currentColor" style="width:18px;height:18px;"><path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/></svg>
-                Exit
-            </button>
-            <iframe id="game-frame" src="" allowfullscreen></iframe>
+        {/* Left Column: Focus & Stats */}
+        <div className="lg:col-span-4 space-y-6">
+          {/* Timer Card */}
+          <section className={`p-8 rounded-3xl border-2 text-center shadow-xl ${cardBg} ${isStudy ? 'border-indigo-100' : 'border-rose-900/30'}`}>
+            <h2 className="text-sm font-bold uppercase tracking-[0.2em] opacity-60 mb-4 flex justify-center items-center gap-2">
+              <Timer size={18} /> {isStudy ? 'Focus Session' : 'Game Break'}
+            </h2>
+            <div className="text-6xl md:text-7xl font-mono font-black mb-8 tabular-nums tracking-tighter">
+              {formatTime(timeLeft)}
+            </div>
+            <div className="flex justify-center gap-4">
+              <button 
+                onClick={toggleTimer}
+                className={`flex-1 py-4 rounded-2xl font-bold flex items-center justify-center gap-2 transition-transform active:scale-95 ${accentColor} text-white shadow-lg`}
+              >
+                {isActive ? <><Pause size={20} /> Pause</> : <><Play size={20} /> Start</>}
+              </button>
+              <button 
+                onClick={resetTimer}
+                className={`p-4 rounded-2xl border-2 transition-colors ${isStudy ? 'border-slate-200 hover:bg-slate-50' : 'border-zinc-800 hover:bg-zinc-800'}`}
+              >
+                <RotateCcw size={20} />
+              </button>
+            </div>
+          </section>
+
+          {/* Game Zone (Only in Game Mode) */}
+          {!isStudy && (
+            <section className={`p-6 rounded-3xl border ${cardBg} overflow-hidden shadow-2xl`}>
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="font-bold flex items-center gap-2">
+                  <Gamepad2 size={18} className="text-rose-500" /> Mini Arcade
+                </h3>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold opacity-50 uppercase">Score</span>
+                  <span className="text-sm font-mono bg-rose-500/20 text-rose-400 px-2 py-1 rounded">{gameScore}</span>
+                </div>
+              </div>
+              
+              <div className="relative aspect-square bg-zinc-950 rounded-xl border border-zinc-800 overflow-hidden shadow-inner">
+                {isGameOver ? (
+                  <div className="absolute inset-0 z-10 bg-black/90 flex flex-col items-center justify-center p-4 text-center">
+                    <Trophy className="text-yellow-500 mb-2" size={32} />
+                    <p className="font-bold text-xl mb-1">GAME OVER</p>
+                    <p className="text-sm text-yellow-500/80 mb-4 font-mono">+{gameScore * 5} XP CLAIMED</p>
+                    <button 
+                      onClick={resetGame}
+                      className="px-8 py-3 bg-rose-600 hover:bg-rose-500 rounded-full font-bold text-sm transition-colors shadow-lg shadow-rose-900/40"
+                    >
+                      Restart Mission
+                    </button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-20 h-full w-full" style={{ gridTemplateColumns: 'repeat(20, 1fr)' }}>
+                    {Array.from({ length: 400 }).map((_, i) => {
+                      const x = i % 20;
+                      const y = Math.floor(i / 20);
+                      const isSnake = snake.some(s => s.x === x && s.y === y);
+                      const isHead = snake[0].x === x && snake[0].y === y;
+                      const isFood = food.x === x && food.y === y;
+                      return (
+                        <div key={i} className={`aspect-square border-[0.5px] border-zinc-900/20 ${isHead ? 'bg-rose-400 z-10 rounded-sm' : isSnake ? 'bg-rose-600 rounded-sm' : isFood ? 'bg-emerald-400 rounded-full scale-75 animate-pulse shadow-[0_0_10px_rgba(52,211,153,0.6)]' : ''}`} />
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Controls */}
+              <div className="grid grid-cols-3 gap-2 mt-6 max-w-[160px] mx-auto">
+                <div />
+                <button onClick={() => setDirection({ x: 0, y: -1 })} className="p-4 bg-zinc-800 hover:bg-zinc-700 active:scale-90 rounded-2xl flex justify-center transition-all"><ChevronUp size={24}/></button>
+                <div />
+                <button onClick={() => setDirection({ x: -1, y: 0 })} className="p-4 bg-zinc-800 hover:bg-zinc-700 active:scale-90 rounded-2xl flex justify-center transition-all"><ChevronLeft size={24}/></button>
+                <button onClick={() => setDirection({ x: 0, y: 1 })} className="p-4 bg-zinc-800 hover:bg-zinc-700 active:scale-90 rounded-2xl flex justify-center transition-all"><ChevronDown size={24}/></button>
+                <button onClick={() => setDirection({ x: 1, y: 0 })} className="p-4 bg-zinc-800 hover:bg-zinc-700 active:scale-90 rounded-2xl flex justify-center transition-all"><ChevronRight size={24}/></button>
+              </div>
+            </section>
+          )}
+
+          {/* Social Feed */}
+          <section className={`p-6 rounded-3xl border ${cardBg}`}>
+            <h3 className="font-bold flex items-center gap-2 mb-4 text-sm uppercase tracking-widest opacity-70">
+              <Flame size={16} className="text-orange-500" /> Live Feed
+            </h3>
+            <div className="space-y-4">
+              <div className="flex gap-3 items-start text-sm">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex-shrink-0" />
+                <div>
+                  <p className="opacity-80"><span className="font-bold">Neo_Learner</span> completed <span className="text-indigo-500">History Quest</span></p>
+                  <p className="text-[10px] opacity-50 uppercase">Just now</p>
+                </div>
+              </div>
+              <div className="flex gap-3 items-start text-sm">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-rose-500 to-orange-600 flex-shrink-0" />
+                <div>
+                  <p className="opacity-80"><span className="font-bold">Glitch_Snake</span> set a new high score</p>
+                  <p className="text-[10px] opacity-50 uppercase">14 mins ago</p>
+                </div>
+              </div>
+            </div>
+          </section>
         </div>
-    </main>
 
-    <!-- Notification -->
-    <div id="notification"></div>
+        {/* Right Column: Tasks & Widgets */}
+        <div className="lg:col-span-8 space-y-6">
+          
+          {/* Dynamic Welcome Banner */}
+          <div className={`p-8 md:p-10 rounded-3xl relative overflow-hidden text-white shadow-2xl ${isStudy ? 'bg-gradient-to-br from-indigo-600 via-indigo-500 to-blue-500' : 'bg-gradient-to-br from-zinc-900 via-rose-700 to-rose-600'}`}>
+            <div className="relative z-10">
+              <div className="inline-block px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-[10px] font-bold uppercase tracking-widest mb-4">
+                System Status: Online
+              </div>
+              <h2 className="text-3xl md:text-4xl font-black mb-3 leading-tight">
+                {isStudy ? "Forge Your Future." : "Level Up Your Game."}
+              </h2>
+              <p className="opacity-90 max-w-md text-sm md:text-base leading-relaxed">
+                {isStudy 
+                  ? "Distraction-free environment engaged. Focus on your objectives and earn the loot you deserve."
+                  : "Welcome to the Nexus Arcade. Take a well-earned break and sharpen your reflexes."}
+              </p>
+            </div>
+            {/* Background Decoration */}
+            <div className="absolute right-[-40px] bottom-[-40px] opacity-10 transform rotate-12 scale-150 pointer-events-none">
+              {isStudy ? <Scroll size={240} /> : <Sword size={240} />}
+            </div>
+          </div>
 
-    <script>
-        // ================= CONFIGURATION =================
-        // Replace with YOUR GitHub username and repo name
-        const GITHUB_USERNAME = 'your-username';
-        const GITHUB_REPO = 'lumo-games-db';
-        const GITHUB_BRANCH = 'main';
-        const GITHUB_FILE = 'games-data.json';
-        // =================================================
+          {/* Task Manager */}
+          <section className={`p-6 md:p-8 rounded-3xl border shadow-sm ${cardBg}`}>
+            <div className="flex justify-between items-center mb-8">
+              <h3 className="text-xl font-bold flex items-center gap-3">
+                <div className={`p-2 rounded-xl ${isStudy ? 'bg-indigo-50 text-indigo-600' : 'bg-rose-950 text-rose-500'}`}>
+                  <CheckCircle2 size={24} />
+                </div>
+                {isStudy ? "Active Quests" : "Battle Log"}
+              </h3>
+              <div className="flex items-center gap-2">
+                <div className={`h-2 w-2 rounded-full animate-pulse ${isStudy ? 'bg-indigo-500' : 'bg-rose-500'}`} />
+                <span className="text-[10px] font-bold opacity-60 uppercase tracking-tighter">
+                  {tasks.filter(t => !t.completed).length} Objectives
+                </span>
+              </div>
+            </div>
 
-        // Construct the raw GitHub URL
-        const GAMES_API_URL = `https://raw.githubusercontent.com/${GITHUB_USERNAME}/${GITHUB_REPO}/${GITHUB_BRANCH}/${GITHUB_FILE}`;
+            <form onSubmit={addTask} className="mb-8 flex gap-3">
+              <input 
+                type="text" 
+                value={newTask}
+                onChange={(e) => setNewTask(e.target.value)}
+                placeholder={isStudy ? "Initialize a new study quest..." : "Deploy a new mission..."}
+                className={`flex-1 p-4 rounded-2xl outline-none border transition-all text-sm font-medium ${isStudy ? 'bg-slate-50 border-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100' : 'bg-zinc-800/50 border-zinc-700 focus:border-rose-500 focus:ring-4 focus:ring-rose-900/20'}`}
+              />
+              <button className={`px-8 rounded-2xl font-bold text-white transition-all active:scale-95 shadow-lg ${accentColor} ${isStudy ? 'shadow-indigo-200' : 'shadow-rose-900/30'}`}>
+                Deploy
+              </button>
+            </form>
 
-        let games = [];
-
-        // Load games from GitHub on startup
-        async function loadGamesFromGitHub() {
-            const loadingOverlay = document.getElementById('loading-overlay');
-            const statusDot = document.getElementById('status-dot');
-            const statusText = document.getElementById('status-text');
-
-            statusDot.className = 'status-dot loading';
-            statusText.textContent = 'Fetching from GitHub...';
-
-            try {
-                const response = await fetch(GAMES_API_URL);
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-
-                const data = await response.json();
-                
-                if (data.games && Array.isArray(data.games)) {
-                    games = data.games;
-                    renderGames();
-                    
-                    statusDot.className = 'status-dot success';
-                    statusText.textContent = `${games.length} games loaded`;
-                    
-                    setTimeout(() => {
-                        loadingOverlay.style.display = 'none';
-                    }, 500);
-                    
-                    showNotification(`✅ Loaded ${games.length} games from GitHub`);
-                } else {
-                    throw new Error('Invalid data format');
-                }
-            } catch (error) {
-                console.error('Error loading games:', error);
-                statusDot.className = 'status-dot error';
-                statusText.textContent = 'Connection failed';
-                
-                // Fallback to cached/local games if available
-                const cached = localStorage.getItem('lumoGamesCache');
-                if (cached) {
-                    games = JSON.parse(cached);
-                    renderGames();
-                    loadingOverlay.style.display = 'none';
-                    showNotification('⚠️ Using cached games (GitHub unavailable)', 'warning');
-                } else {
-                    loadingOverlay.innerHTML = `
-                        <div style="color: #ff0000; text-align: center;">
-                            <h2>❌ Failed to load games</h2>
-                            <p>${error.message}</p>
-                            <p style="margin-top: 15px;">Check your GitHub configuration:</p>
-                            <code style="background: #222; padding: 10px; display: block; margin: 10px 0;">${GAMES_API_URL}</code>
-                            <button onclick="location.reload()" style="margin-top: 15px; padding: 10px 20px; background: var(--primary); color: #fff; border: none; border-radius: 5px; cursor: pointer;">Retry</button>
-                        </div>
-                    `;
-                }
-            }
-        }
-
-        function renderGames() {
-            const grid = document.getElementById('games-grid');
-            grid.innerHTML = '';
-
-            if (games.length === 0) {
-                grid.innerHTML = '<p style="color: var(--text-muted); grid-column: 1/-1; text-align: center;">No games available. Add games to your GitHub repository!</p>';
-                return;
-            }
-
-            games.forEach(game => {
-                const card = document.createElement('div');
-                card.className = 'game-card';
-                card.innerHTML = `
-                    ${game.category ? `<span class="game-category">${game.category}</span>` : ''}
-                    <img src="${game.thumbnail || 'https://via.placeholder.com/220x140?text=No+Image'}" 
-                         alt="${game.title}" class="game-thumb" 
-                         onerror="this.src='https://via.placeholder.com/220x140?text=No+Image'">
-                    <div class="game-info">
-                        <div class="game-title">${game.title}</div>
-                        <div class="game-desc">${game.description || 'No description'}</div>
+            <div className="space-y-3">
+              {tasks.length === 0 ? (
+                <div className="text-center py-16">
+                  <div className="opacity-20 mb-2 flex justify-center"><Scroll size={48} /></div>
+                  <p className="opacity-40 text-sm italic font-medium">The log is empty. Start a new session to begin.</p>
+                </div>
+              ) : (
+                tasks.map(task => (
+                  <div key={task.id} className={`group p-5 rounded-2xl flex items-center justify-between border transition-all ${task.completed ? 'opacity-40 grayscale-[0.5]' : 'hover:shadow-md hover:border-transparent cursor-default'} ${cardBg} ${!task.completed && (isStudy ? 'hover:bg-indigo-50/30' : 'hover:bg-zinc-800/40')}`}>
+                    <div className="flex items-center gap-4">
+                      <button 
+                        onClick={() => completeTask(task.id)}
+                        className={`w-7 h-7 rounded-lg border-2 flex items-center justify-center transition-all ${task.completed ? 'bg-green-500 border-green-500 shadow-lg shadow-green-500/30' : isStudy ? 'border-slate-200 hover:border-indigo-500 hover:bg-indigo-50' : 'border-zinc-700 hover:border-rose-500 hover:bg-rose-900/20'}`}
+                      >
+                        {task.completed && <CheckCircle2 size={18} className="text-white" />}
+                      </button>
+                      <span className={`font-semibold text-sm md:text-base ${task.completed ? 'line-through opacity-60' : ''}`}>
+                        {task.text}
+                      </span>
                     </div>
-                `;
-                card.onclick = () => loadGame(game.url);
-                grid.appendChild(card);
-            });
-        }
+                    {!task.completed && (
+                      <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-yellow-600 dark:text-yellow-500 bg-yellow-50 dark:bg-yellow-900/20 px-3 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                        +20 XP
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          </section>
 
-        function loadGame(url) {
-            const container = document.getElementById('game-frame-container');
-            const frame = document.getElementById('game-frame');
-            frame.src = url;
-            container.style.display = 'block';
-            container.scrollIntoView({ behavior: 'smooth' });
-        }
+          {/* Quick Links */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-8">
+            <div className={`p-6 rounded-3xl border flex items-center gap-5 cursor-pointer hover:shadow-xl transition-all hover:-translate-y-1 ${cardBg}`}>
+              <div className="p-4 rounded-2xl bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400 shadow-inner">
+                <Music size={28} />
+              </div>
+              <div>
+                <h4 className="font-bold text-lg leading-tight">Nexus Beats</h4>
+                <p className="text-sm opacity-60 font-medium">{isStudy ? "Deep Focus Lo-fi" : "Adrenaline Mix"}</p>
+              </div>
+            </div>
+            <div className={`p-6 rounded-3xl border flex items-center gap-5 cursor-pointer hover:shadow-xl transition-all hover:-translate-y-1 ${cardBg}`}>
+              <div className="p-4 rounded-2xl bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400 shadow-inner">
+                <Trophy size={28} />
+              </div>
+              <div>
+                <h4 className="font-bold text-lg leading-tight">Rankings</h4>
+                <p className="text-sm opacity-60 font-medium">Global Achievement Hub</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
 
-        function refreshGames() {
-            showNotification('🔄 Refreshing games...');
-            loadGamesFromGitHub();
-        }
+      {/* Level Up Pop */}
+      {xp > 0 && xp % 100 === 0 && (
+         <div className="fixed bottom-10 right-10 animate-bounce bg-yellow-400 text-black px-8 py-4 rounded-full font-black shadow-[0_20px_50px_rgba(234,179,8,0.4)] flex items-center gap-3 z-[100] border-4 border-white">
+            <Trophy size={24} /> LEVEL UP!
+         </div>
+      )}
 
-        function openGitHubLink() {
-            const githubUrl = `https://github.com/${GITHUB_USERNAME}/${GITHUB_REPO}`;
-            window.open(githubUrl, '_blank');
-        }
+      {/* Footer Info (Hidden in Fullscreen) */}
+      {!isFullscreen && (
+        <footer className="text-center py-10 opacity-30 text-xs font-bold tracking-widest uppercase">
+          &copy; 2024 Nexus Gaming & Study Hub // Protocol v2.4.0
+        </footer>
+      )}
+    </div>
+  );
+};
 
-        // ================= FULLSCREEN =================
-        function toggleGameFullscreen() {
-            const container = document.getElementById('game-frame-container');
-            container.classList.toggle('fullscreen');
-            
-            if (container.classList.contains('fullscreen')) {
-                if (container.requestFullscreen) container.requestFullscreen();
-                else if (container.webkitRequestFullscreen) container.webkitRequestFullscreen();
-                else if (container.msRequestFullscreen) container.msRequestFullscreen();
-            }
-        }
-
-        function exitGameFullscreen() {
-            const container = document.getElementById('game-frame-container');
-            container.classList.remove('fullscreen');
-            
-            if (document.exitFullscreen) document.exitFullscreen();
-            else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
-            else if (document.msExitFullscreen) document.msExitFullscreen();
-        }
-
-        document.addEventListener('fullscreenchange', () => {
-            const container = document.getElementById('game-frame-container');
-            if (!document.fullscreenElement && container.classList.contains('fullscreen')) {
-                container.classList.remove('fullscreen');
-            }
-        });
-
-        // ================= NOTIFICATIONS =================
-        function showNotification(message, type = 'success') {
-            const notif = document.getElementById('notification');
-            notif.textContent = message;
-            notif.style.background = type === 'error' ? '#c00' : type === 'warning' ? '#ffa500' : 'var(--primary)';
-            notif.style.display = 'block';
-            setTimeout(() => {
-                notif.style.display = 'none';
-            }, 3000);
-        }
-
-        // Initialize
-        loadGamesFromGitHub();
-    </script>
-</body>
-</html>
+export default App;
