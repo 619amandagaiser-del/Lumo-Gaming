@@ -3,431 +3,453 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nexus Gaming & Study Hub</title>
+    <title>Gamer's Sanctuary Hub</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; }
-        .font-mono { font-family: 'JetBrains+Mono', monospace; }
-        .grid-snake { display: grid; grid-template-columns: repeat(20, 1fr); }
-        .snake-dot { border: 0.5px solid rgba(255,255,255,0.05); }
-        .transition-all { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        
-        /* Custom scrollbar */
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400;600&display=swap');
+
+        :root {
+            --accent: #8b5cf6;
+            --accent-hover: #7c3aed;
+            --bg-dark: #0f172a;
+            --card-bg: #1e293b;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: #f8fafc;
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        .font-orbitron { font-family: 'Orbitron', sans-serif; }
+
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .game-card:hover .play-overlay {
+            opacity: 1;
+        }
+
+        .neon-glow {
+            box-shadow: 0 0 15px rgba(139, 92, 246, 0.4);
+        }
+
+        /* AI Assistant Styles */
+        #aiAssistant {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 100;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .ai-collapsed {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+        }
+
+        .ai-expanded {
+            width: 350px;
+            height: 500px;
+            border-radius: 1.5rem;
+        }
+
+        .chat-bubbles::-webkit-scrollbar { width: 4px; }
+        .chat-bubbles::-webkit-scrollbar-thumb { background: #475569; border-radius: 10px; }
+
+        .typing-dot {
+            width: 6px;
+            height: 6px;
+            background: #8b5cf6;
+            border-radius: 50%;
+            animation: typing 1s infinite ease-in-out;
+        }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typing {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
+        }
+
+        /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        .dark ::-webkit-scrollbar-thumb { background: #334155; }
+        ::-webkit-scrollbar-track { background: var(--bg-dark); }
+        ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 10px; }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        .nav-link.active {
+            color: white;
+            border-bottom: 2px solid var(--accent);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .active-modal { display: flex; }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-900 transition-colors duration-500" id="body">
+<body class="min-h-screen">
 
     <!-- Navigation -->
-    <nav id="navbar" class="sticky top-0 z-50 border-b p-4 flex justify-between items-center bg-white border-slate-200">
-        <div class="flex items-center gap-2">
-            <div id="mode-icon-container" class="p-2 rounded-lg bg-indigo-600 text-white">
-                <span id="nav-icon">📖</span>
+    <nav class="fixed top-0 w-full z-50 glass-panel px-6 py-4 flex justify-between items-center">
+        <div class="flex items-center space-x-2">
+            <div class="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center neon-glow">
+                <i class="fas fa-bolt text-white text-xl"></i>
             </div>
-            <h1 class="text-xl font-bold tracking-tight">
-                NEXUS <span id="mode-text" class="text-indigo-600">STUDY</span>
-            </h1>
+            <span class="text-2xl font-orbitron font-bold tracking-tighter uppercase">Sanctuary</span>
+        </div>
+        
+        <div class="hidden md:flex flex-1 max-w-md mx-8">
+            <div class="relative w-full search-container">
+                <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"></i>
+                <input type="text" placeholder="Find games or entertainment..." 
+                    class="w-full bg-slate-800/50 border border-slate-700 rounded-full py-2 pl-12 pr-4 text-sm focus:outline-none focus:border-indigo-500 transition-all">
+            </div>
         </div>
 
-        <div class="flex items-center gap-4 md:gap-6">
-            <!-- XP Bar -->
-            <div class="hidden md:flex flex-col items-end gap-1">
-                <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-widest opacity-70">
-                    ⚡ LVL <span id="display-level">1</span> — <span id="display-xp">0</span>/100 XP
-                </div>
-                <div class="w-48 h-2 bg-slate-200 rounded-full overflow-hidden">
-                    <div id="xp-progress" class="h-full bg-indigo-600 transition-all duration-1000" style="width: 0%"></div>
-                </div>
+        <div class="flex items-center space-x-6">
+            <div class="hidden lg:flex space-x-8 text-[11px] font-bold uppercase tracking-widest text-gray-400">
+                <button onclick="switchTab('library')" class="nav-link active py-2 transition hover:text-white">Library</button>
+                <button onclick="switchTab('tv')" class="nav-link py-2 transition hover:text-white">Sanctuary TV</button>
+                <button class="nav-link py-2 transition hover:text-white">Social</button>
             </div>
-
-            <!-- Fullscreen -->
-            <button onclick="toggleFullscreen()" class="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600">
-                <span id="fs-icon">⛶</span>
-            </button>
-
-            <!-- Mode Switch -->
-            <button onclick="toggleMode()" class="relative flex items-center p-1 rounded-full w-16 h-8 bg-slate-200 transition-colors" id="mode-toggle-bg">
-                <div id="mode-toggle-knob" class="absolute w-6 h-6 rounded-full shadow-md flex items-center justify-center transition-all transform translate-x-0 bg-white text-indigo-600 text-xs">
-                    📖
-                </div>
-            </button>
+            <div class="flex items-center space-x-4 border-l border-slate-700 pl-6">
+                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="Avatar" class="w-9 h-9 rounded-full border-2 border-indigo-500 hover:scale-110 transition cursor-pointer">
+            </div>
         </div>
     </nav>
 
     <!-- Main Content -->
-    <main class="max-w-6xl mx-auto p-4 md:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
+    <main class="pt-24 pb-12 px-6 lg:px-12 max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-8">
         
-        <!-- Left Column -->
-        <div class="lg:col-span-4 space-y-6">
-            <!-- Timer -->
-            <section class="p-8 rounded-3xl border-2 text-center shadow-xl bg-white border-indigo-100" id="timer-card">
-                <h2 class="text-sm font-bold uppercase tracking-widest opacity-60 mb-4 flex justify-center items-center gap-2">
-                    ⏱️ <span id="timer-label">Focus Session</span>
-                </h2>
-                <div id="timer-display" class="text-6xl md:text-7xl font-mono font-black mb-8 tabular-nums tracking-tighter">25:00</div>
-                <div class="flex justify-center gap-4">
-                    <button id="timer-btn" onclick="toggleTimer()" class="flex-1 py-4 rounded-2xl font-bold flex items-center justify-center gap-2 bg-indigo-600 text-white shadow-lg active:scale-95 transition-all">
-                        ▶ Start
-                    </button>
-                    <button onclick="resetTimer()" class="p-4 rounded-2xl border-2 border-slate-200 hover:bg-slate-50 transition-all">
-                        ↺
-                    </button>
-                </div>
-            </section>
+        <!-- Left Sidebar -->
+        <aside class="lg:col-span-1 space-y-6">
+            <div class="glass-panel rounded-2xl p-6">
+                <h3 class="text-gray-400 text-[10px] font-bold uppercase mb-4 tracking-[0.2em]">Categories</h3>
+                <ul class="space-y-3">
+                    <li class="flex items-center justify-between text-indigo-400 cursor-pointer group">
+                        <div class="flex items-center space-x-3">
+                            <i class="fas fa-fire-alt text-sm"></i>
+                            <span class="font-semibold text-sm">Action</span>
+                        </div>
+                        <span class="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-gray-400">12</span>
+                    </li>
+                    <li class="flex items-center justify-between text-gray-400 hover:text-white cursor-pointer transition text-sm">
+                        <div class="flex items-center space-x-3">
+                            <i class="fas fa-crosshairs"></i>
+                            <span>Ragdoll Fun</span>
+                        </div>
+                    </li>
+                </ul>
+            </div>
 
-            <!-- Arcade (Hidden in Study Mode) -->
-            <section id="arcade-card" class="hidden p-6 rounded-3xl border bg-zinc-900 border-zinc-800 overflow-hidden shadow-2xl text-white">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="font-bold flex items-center gap-2">🎮 Mini Arcade</h3>
-                    <div class="text-sm font-mono bg-rose-500/20 text-rose-400 px-2 py-1 rounded">Score: <span id="game-score">0</span></div>
+            <div class="glass-panel rounded-2xl p-6">
+                <h3 class="text-gray-400 text-[10px] font-bold uppercase mb-4 tracking-[0.2em]">Friends Activity</h3>
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div class="relative">
+                                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Luna" class="w-8 h-8 rounded-full bg-slate-700">
+                                <span class="absolute bottom-0 right-0 w-2 h-2 bg-green-500 rounded-full border border-slate-900 shadow-sm"></span>
+                            </div>
+                            <div>
+                                <p class="text-xs font-bold">Luna_Void</p>
+                                <p class="text-[10px] text-indigo-400">Watching Sanctuary TV</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div id="game-container" class="relative aspect-square bg-black rounded-xl border border-zinc-800 grid-snake">
-                    <!-- Game pixels generated by JS -->
-                </div>
-                <div class="grid grid-cols-3 gap-2 mt-6 max-w-[140px] mx-auto">
-                    <div></div><button onclick="changeDir(0,-1)" class="p-3 bg-zinc-800 rounded-xl flex justify-center">▲</button><div></div>
-                    <button onclick="changeDir(-1,0)" class="p-3 bg-zinc-800 rounded-xl flex justify-center">◀</button>
-                    <button onclick="changeDir(0,1)" class="p-3 bg-zinc-800 rounded-xl flex justify-center">▼</button>
-                    <button onclick="changeDir(1,0)" class="p-3 bg-zinc-800 rounded-xl flex justify-center">▶</button>
-                </div>
-            </section>
+            </div>
+        </aside>
 
-            <!-- Social Feed -->
-            <section class="p-6 rounded-3xl border bg-white border-slate-200" id="feed-card">
-                <h3 class="font-bold flex items-center gap-2 mb-4 text-xs uppercase tracking-widest opacity-70">🔥 Live Feed</h3>
-                <div class="space-y-4" id="social-list">
-                    <div class="flex gap-3 items-start text-sm">
-                        <div class="w-8 h-8 rounded-full bg-indigo-500 flex-shrink-0"></div>
-                        <div><p class="opacity-80"><b>User_102</b> completed Math Quest</p><p class="text-[10px] opacity-50 uppercase">Just now</p></div>
+        <!-- Main Feed Area -->
+        <div class="lg:col-span-3">
+            
+            <!-- Tab: Library -->
+            <section id="library" class="tab-content active space-y-8">
+                <!-- Featured Hero -->
+                <div class="relative h-64 rounded-3xl overflow-hidden group shadow-2xl">
+                    <img src="https://images.unsplash.com/photo-1614027164847-1b2809eb1895?auto=format&fit=crop&q=80&w=1200" class="w-full h-full object-cover transition duration-700 group-hover:scale-105" alt="Featured">
+                    <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/10 to-transparent"></div>
+                    <div class="absolute bottom-8 left-8">
+                        <span class="bg-indigo-600 px-2 py-0.5 rounded text-[10px] font-bold uppercase mb-2 inline-block">New Entry</span>
+                        <h2 class="text-4xl font-orbitron font-bold">RAGDOLL ARCHERS</h2>
+                        <p class="text-gray-300 mt-2 max-w-md text-sm">Master the physics of archery in this hilarious ragdoll combat simulator.</p>
+                        <button onclick="launchGame('Ragdoll Archers')" class="mt-4 bg-white text-black px-8 py-2.5 rounded-xl font-bold hover:bg-indigo-500 hover:text-white transition text-sm">LAUNCH GAME</button>
+                    </div>
+                </div>
+
+                <!-- Games Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="game-card group relative bg-slate-800 rounded-2xl overflow-hidden border border-transparent hover:border-indigo-500/50 transition duration-300 shadow-xl">
+                        <div class="h-40 relative">
+                            <img src="https://images.unsplash.com/photo-1551103782-8ab07afd45c1?auto=format&fit=crop&q=80&w=600" class="w-full h-full object-cover">
+                            <div class="play-overlay absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 transition duration-300">
+                                <button onclick="launchGame('Ragdoll Hit')" class="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center text-sm shadow-lg hover:scale-110 transition">
+                                    <i class="fas fa-play ml-1"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="p-4">
+                            <h4 class="font-bold text-sm">Ragdoll Hit</h4>
+                            <p class="text-[10px] text-gray-500">Action • Ragdoll Physics</p>
+                        </div>
+                    </div>
+
+                    <div class="game-card group relative bg-slate-800 rounded-2xl overflow-hidden border border-transparent hover:border-pink-500/50 transition duration-300 shadow-xl">
+                        <div class="h-40 relative">
+                            <img src="https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=600" class="w-full h-full object-cover">
+                            <div class="play-overlay absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 transition duration-300">
+                                <button onclick="launchGame('Stickman Hook')" class="w-10 h-10 bg-pink-600 rounded-full flex items-center justify-center text-sm shadow-lg hover:scale-110 transition">
+                                    <i class="fas fa-play ml-1"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="p-4">
+                            <h4 class="font-bold text-sm">Stickman Hook</h4>
+                            <p class="text-[10px] text-gray-500">Arcade • Physics Swinging</p>
+                        </div>
+                    </div>
+
+                    <div class="game-card group relative bg-slate-800 rounded-2xl overflow-hidden border border-transparent hover:border-orange-500/50 transition duration-300 shadow-xl">
+                        <div class="h-40 relative">
+                            <img src="https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&q=80&w=600" class="w-full h-full object-cover">
+                            <div class="play-overlay absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 transition duration-300">
+                                <button onclick="launchGame('Moto X3M')" class="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center text-sm shadow-lg hover:scale-110 transition">
+                                    <i class="fas fa-play ml-1"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="p-4">
+                            <h4 class="font-bold text-sm">Moto X3M</h4>
+                            <p class="text-[10px] text-gray-500">Racing • Stunts</p>
+                        </div>
                     </div>
                 </div>
             </section>
-        </div>
 
-        <!-- Right Column -->
-        <div class="lg:col-span-8 space-y-6">
-            <!-- Banner -->
-            <div id="banner" class="p-8 md:p-10 rounded-3xl relative overflow-hidden text-white shadow-2xl bg-gradient-to-br from-indigo-600 to-blue-500">
-                <div class="relative z-10">
-                    <div class="inline-block px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-[10px] font-bold uppercase tracking-widest mb-4">System Online</div>
-                    <h2 id="banner-title" class="text-3xl md:text-4xl font-black mb-3 leading-tight">Forge Your Future.</h2>
-                    <p id="banner-desc" class="opacity-90 max-w-md text-sm leading-relaxed">Focus on your objectives and earn the loot you deserve.</p>
-                </div>
-            </div>
-
-            <!-- Tasks -->
-            <section class="p-6 md:p-8 rounded-3xl border bg-white border-slate-200 shadow-sm" id="tasks-card">
-                <div class="flex justify-between items-center mb-8">
-                    <h3 class="text-xl font-bold flex items-center gap-3">✅ <span id="task-title">Active Quests</span></h3>
-                </div>
-
-                <form onsubmit="addTask(event)" class="mb-8 flex gap-3">
-                    <input id="task-input" type="text" placeholder="New quest name..." class="flex-1 p-4 rounded-2xl outline-none border bg-slate-50 border-slate-200 focus:border-indigo-500 text-sm">
-                    <button class="px-8 rounded-2xl font-bold text-white bg-indigo-600 shadow-lg active:scale-95 transition-all" id="add-btn">Add</button>
-                </form>
-
-                <div id="task-list" class="space-y-3">
-                    <!-- Tasks injected here -->
+            <!-- Tab: Sanctuary TV -->
+            <section id="tv" class="tab-content space-y-6">
+                <div class="glass-panel rounded-3xl p-8 text-center border-indigo-500/30">
+                    <div class="w-20 h-20 bg-indigo-600/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <i class="fas fa-tv text-indigo-400 text-3xl"></i>
+                    </div>
+                    <h2 class="text-3xl font-orbitron font-bold mb-2">Sanctuary TV</h2>
+                    <p class="text-gray-400 max-w-md mx-auto mb-8">Stream your favorite gaming channels directly within the sanctuary. Paste a URL or browse featured content.</p>
+                    <div class="max-w-xl mx-auto flex space-x-2">
+                        <input id="tvUrl" type="text" placeholder="Paste Video URL..." class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500 transition">
+                        <button onclick="launchTV()" class="bg-indigo-600 px-6 py-3 rounded-xl font-bold hover:bg-indigo-500 transition">PLAY</button>
+                    </div>
                 </div>
             </section>
+
         </div>
     </main>
 
-    <!-- Level Up Modal -->
-    <div id="lvl-up" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
-        <div class="bg-white p-8 rounded-3xl text-center shadow-2xl border-4 border-yellow-400 animate-bounce">
-            <div class="text-6xl mb-4">🏆</div>
-            <h2 class="text-3xl font-black mb-2">LEVEL UP!</h2>
-            <p class="text-slate-600 mb-6">You've reached level <span id="new-lvl">2</span></p>
-            <button onclick="closeLvlModal()" class="px-8 py-3 bg-indigo-600 text-white rounded-full font-bold">Keep Going</button>
+    <!-- AI Assistant UI -->
+    <div id="aiAssistant" class="glass-panel ai-collapsed overflow-hidden shadow-2xl flex flex-col border-indigo-500/50">
+        <!-- AI Header -->
+        <div id="aiHeader" class="bg-indigo-600 p-4 flex items-center justify-between cursor-pointer" onclick="toggleAI()">
+            <div class="flex items-center space-x-3">
+                <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                    <i class="fas fa-robot text-white"></i>
+                </div>
+                <div class="ai-header-text hidden">
+                    <h4 class="text-sm font-bold leading-none">NOVA AI</h4>
+                    <span class="text-[10px] text-indigo-200">Sanctuary Guide</span>
+                </div>
+            </div>
+            <i id="aiChevron" class="fas fa-chevron-up text-white text-xs"></i>
+        </div>
+
+        <!-- Chat Body -->
+        <div id="aiBody" class="flex-1 flex flex-col overflow-hidden hidden">
+            <div id="chatBubbles" class="flex-1 p-4 space-y-4 overflow-y-auto chat-bubbles">
+                <div class="flex items-start space-x-2">
+                    <div class="w-6 h-6 bg-indigo-600 rounded-full flex items-center justify-center text-[10px]">AI</div>
+                    <div class="bg-slate-800 rounded-2xl rounded-tl-none p-3 text-xs max-w-[80%]">
+                        Hello! I'm Nova. I can help you find games or suggest something to watch on Sanctuary TV. What's on your mind?
+                    </div>
+                </div>
+            </div>
+
+            <!-- Typing Indicator -->
+            <div id="typingIndicator" class="px-4 py-2 flex space-x-1 hidden">
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+            </div>
+
+            <!-- Chat Input -->
+            <div class="p-4 bg-slate-900/50 border-t border-slate-700">
+                <div class="relative">
+                    <input id="aiInput" type="text" placeholder="Ask Nova anything..." 
+                        class="w-full bg-slate-800 border border-slate-700 rounded-xl py-2 pl-4 pr-10 text-xs focus:outline-none focus:border-indigo-500"
+                        onkeypress="if(event.key === 'Enter') sendToAI()">
+                    <button onclick="sendToAI()" class="absolute right-2 top-1/2 -translate-y-1/2 text-indigo-400 hover:text-white transition">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Launching Modal -->
+    <div id="gameModal" class="modal">
+        <div class="glass-panel p-10 rounded-3xl max-w-2xl w-full text-center relative border-indigo-500/50">
+            <button onclick="closeModal()" class="absolute top-6 right-6 text-gray-500 hover:text-white transition">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+            <div id="loadingUI">
+                <div class="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
+                <h3 id="modalTitle" class="text-2xl font-orbitron font-bold mb-2 tracking-widest">LOADING...</h3>
+                <p class="text-gray-400 text-sm">Preparing Sanctuary server for <span id="gameName" class="text-indigo-400 font-bold">Game</span></p>
+            </div>
         </div>
     </div>
 
     <script>
-        // State
-        let mode = 'study';
-        let xp = parseInt(localStorage.getItem('hub_xp')) || 0;
-        let tasks = JSON.parse(localStorage.getItem('hub_tasks')) || [];
-        let timeLeft = 25 * 60;
-        let timerActive = false;
-        let timerInterval;
-
-        // Game State
-        let snake = [{x: 10, y: 10}];
-        let food = {x: 5, y: 5};
-        let direction = {x: 0, y: -1};
-        let gameScore = 0;
-        let gameActive = false;
-        let gameInterval;
-
-        // Init
-        window.onload = () => {
-            updateUI();
-            renderTasks();
-            initGameGrid();
-        };
-
-        function toggleMode() {
-            mode = mode === 'study' ? 'game' : 'study';
+        // Tab switching logic
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
             
-            // UI Classes
-            const body = document.getElementById('body');
-            const nav = document.getElementById('navbar');
-            const banner = document.getElementById('banner');
-            const arcade = document.getElementById('arcade-card');
-            const timerCard = document.getElementById('timer-card');
-            const tasksCard = document.getElementById('tasks-card');
-            const feedCard = document.getElementById('feed-card');
-            const knob = document.getElementById('mode-toggle-knob');
-            const toggleBg = document.getElementById('mode-toggle-bg');
-            const btn = document.getElementById('timer-btn');
-            const addBtn = document.getElementById('add-btn');
-
-            if (mode === 'game') {
-                body.className = "bg-zinc-950 text-zinc-100 transition-colors duration-500";
-                nav.className = "sticky top-0 z-50 border-b p-4 flex justify-between items-center bg-zinc-900 border-zinc-800";
-                banner.className = "p-8 md:p-10 rounded-3xl relative overflow-hidden text-white shadow-2xl bg-gradient-to-br from-zinc-900 via-rose-700 to-rose-600";
-                arcade.classList.remove('hidden');
-                timerCard.className = "p-8 rounded-3xl border-2 text-center shadow-xl bg-zinc-900 border-rose-900/30";
-                tasksCard.className = "p-6 md:p-8 rounded-3xl border bg-zinc-900 border-zinc-800 shadow-sm";
-                feedCard.className = "p-6 rounded-3xl border bg-zinc-900 border-zinc-800";
-                knob.className = "absolute w-6 h-6 rounded-full shadow-md flex items-center justify-center transition-all transform translate-x-8 bg-zinc-700 text-rose-500 text-xs";
-                knob.innerText = "🎮";
-                toggleBg.className = "relative flex items-center p-1 rounded-full w-16 h-8 bg-zinc-800 transition-colors";
-                btn.className = "flex-1 py-4 rounded-2xl font-bold flex items-center justify-center gap-2 bg-rose-600 text-white shadow-lg active:scale-95 transition-all";
-                addBtn.className = "px-8 rounded-2xl font-bold text-white bg-rose-600 shadow-lg active:scale-95 transition-all";
-                
-                document.getElementById('mode-text').innerText = "GAME";
-                document.getElementById('mode-text').className = "text-rose-600";
-                document.getElementById('mode-icon-container').className = "p-2 rounded-lg bg-rose-600 text-white";
-                document.getElementById('nav-icon').innerText = "🎮";
-                document.getElementById('banner-title').innerText = "Level Up Your Game.";
-                document.getElementById('banner-desc').innerText = "Welcome to the Nexus Arcade. Take a break and sharpen your reflexes.";
-                document.getElementById('timer-label').innerText = "Game Break";
-                document.getElementById('task-title').innerText = "Battle Log";
-                startGame();
-            } else {
-                body.className = "bg-slate-50 text-slate-900 transition-colors duration-500";
-                nav.className = "sticky top-0 z-50 border-b p-4 flex justify-between items-center bg-white border-slate-200";
-                banner.className = "p-8 md:p-10 rounded-3xl relative overflow-hidden text-white shadow-2xl bg-gradient-to-br from-indigo-600 to-blue-500";
-                arcade.classList.add('hidden');
-                timerCard.className = "p-8 rounded-3xl border-2 text-center shadow-xl bg-white border-indigo-100";
-                tasksCard.className = "p-6 md:p-8 rounded-3xl border bg-white border-slate-200 shadow-sm";
-                feedCard.className = "p-6 rounded-3xl border bg-white border-slate-200";
-                knob.className = "absolute w-6 h-6 rounded-full shadow-md flex items-center justify-center transition-all transform translate-x-0 bg-white text-indigo-600 text-xs";
-                knob.innerText = "📖";
-                toggleBg.className = "relative flex items-center p-1 rounded-full w-16 h-8 bg-slate-200 transition-colors";
-                btn.className = "flex-1 py-4 rounded-2xl font-bold flex items-center justify-center gap-2 bg-indigo-600 text-white shadow-lg active:scale-95 transition-all";
-                addBtn.className = "px-8 rounded-2xl font-bold text-white bg-indigo-600 shadow-lg active:scale-95 transition-all";
-
-                document.getElementById('mode-text').innerText = "STUDY";
-                document.getElementById('mode-text').className = "text-indigo-600";
-                document.getElementById('mode-icon-container').className = "p-2 rounded-lg bg-indigo-600 text-white";
-                document.getElementById('nav-icon').innerText = "📖";
-                document.getElementById('banner-title').innerText = "Forge Your Future.";
-                document.getElementById('banner-desc').innerText = "Focus on your objectives and earn the loot you deserve.";
-                document.getElementById('timer-label').innerText = "Focus Session";
-                document.getElementById('task-title').innerText = "Active Quests";
-                stopGame();
-            }
-            renderTasks();
-            updateUI();
-        }
-
-        // Logic Functions
-        function gainXp(amt) {
-            let oldLvl = Math.floor(xp / 100);
-            xp += amt;
-            let newLvl = Math.floor(xp / 100);
-            localStorage.setItem('hub_xp', xp);
-            if (newLvl > oldLvl) {
-                document.getElementById('new-lvl').innerText = newLvl + 1;
-                document.getElementById('lvl-up').classList.remove('hidden');
-            }
-            updateUI();
-        }
-
-        function updateUI() {
-            const lvl = Math.floor(xp / 100) + 1;
-            const progress = xp % 100;
-            document.getElementById('display-level').innerText = lvl;
-            document.getElementById('display-xp').innerText = progress;
-            document.getElementById('xp-progress').style.width = progress + "%";
-        }
-
-        function closeLvlModal() { document.getElementById('lvl-up').classList.add('hidden'); }
-
-        // Timer
-        function toggleTimer() {
-            timerActive = !timerActive;
-            const btn = document.getElementById('timer-btn');
-            if (timerActive) {
-                btn.innerText = "⏸ Pause";
-                timerInterval = setInterval(() => {
-                    if (timeLeft > 0) {
-                        timeLeft--;
-                        updateTimerDisplay();
-                    } else {
-                        gainXp(50);
-                        resetTimer();
-                    }
-                }, 1000);
-            } else {
-                btn.innerText = "▶ Start";
-                clearInterval(timerInterval);
-            }
-        }
-
-        function resetTimer() {
-            clearInterval(timerInterval);
-            timerActive = false;
-            timeLeft = 25 * 60;
-            document.getElementById('timer-btn').innerText = "▶ Start";
-            updateTimerDisplay();
-        }
-
-        function updateTimerDisplay() {
-            const m = Math.floor(timeLeft / 60);
-            const s = timeLeft % 60;
-            document.getElementById('timer-display').innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
-        }
-
-        // Tasks
-        function addTask(e) {
-            e.preventDefault();
-            const input = document.getElementById('task-input');
-            if (!input.value.trim()) return;
-            tasks.unshift({ id: Date.now(), text: input.value, done: false });
-            input.value = "";
-            saveTasks();
-            renderTasks();
-        }
-
-        function completeTask(id) {
-            tasks = tasks.map(t => {
-                if (t.id === id && !t.done) {
-                    gainXp(20);
-                    return { ...t, done: true };
+            // Find the button that was clicked to set it as active
+            const buttons = document.querySelectorAll('.nav-link');
+            buttons.forEach(btn => {
+                if (btn.innerText.toLowerCase().includes(tabId)) {
+                    btn.classList.add('active');
                 }
-                return t;
-            });
-            saveTasks();
-            renderTasks();
-        }
-
-        function saveTasks() { localStorage.setItem('hub_tasks', JSON.stringify(tasks)); }
-
-        function renderTasks() {
-            const list = document.getElementById('task-list');
-            list.innerHTML = tasks.length ? "" : '<div class="text-center py-10 opacity-30 italic">No objectives logged.</div>';
-            tasks.forEach(t => {
-                const item = document.createElement('div');
-                item.className = `p-4 rounded-xl flex items-center justify-between border transition-all ${t.done ? 'opacity-40 bg-slate-100' : 'bg-white hover:border-indigo-500'}`;
-                if (mode === 'game' && !t.done) item.className = `p-4 rounded-xl flex items-center justify-between border border-zinc-800 bg-zinc-900 transition-all hover:border-rose-500`;
-                
-                item.innerHTML = `
-                    <div class="flex items-center gap-3">
-                        <button onclick="completeTask(${t.id})" class="w-6 h-6 border-2 rounded ${t.done ? 'bg-green-500 border-green-500' : 'border-slate-300'}">
-                            ${t.done ? '✓' : ''}
-                        </button>
-                        <span class="${t.done ? 'line-through' : 'font-semibold'}">${t.text}</span>
-                    </div>
-                    ${!t.done ? `<span class="text-[10px] font-bold text-yellow-500">+20 XP</span>` : ''}
-                `;
-                list.appendChild(item);
             });
         }
 
-        // Game (Snake)
-        function initGameGrid() {
-            const grid = document.getElementById('game-container');
-            grid.innerHTML = "";
-            for (let i = 0; i < 400; i++) {
-                const dot = document.createElement('div');
-                dot.id = `dot-${i}`;
-                dot.className = "snake-dot";
-                grid.appendChild(dot);
+        // AI Logic
+        let aiOpen = false;
+        function toggleAI() {
+            const ai = document.getElementById('aiAssistant');
+            const headerText = document.querySelector('.ai-header-text');
+            const aiBody = document.getElementById('aiBody');
+            const chevron = document.getElementById('aiChevron');
+
+            if (aiOpen) {
+                ai.classList.remove('ai-expanded');
+                ai.classList.add('ai-collapsed');
+                headerText.classList.add('hidden');
+                aiBody.classList.add('hidden');
+                chevron.classList.replace('fa-chevron-down', 'fa-chevron-up');
+            } else {
+                ai.classList.remove('ai-collapsed');
+                ai.classList.add('ai-expanded');
+                setTimeout(() => {
+                    headerText.classList.remove('hidden');
+                    aiBody.classList.remove('hidden');
+                }, 100);
+                chevron.classList.replace('fa-chevron-up', 'fa-chevron-down');
             }
+            aiOpen = !aiOpen;
         }
 
-        function startGame() {
-            gameActive = true;
-            snake = [{x: 10, y: 10}];
-            gameScore = 0;
-            document.getElementById('game-score').innerText = "0";
-            gameInterval = setInterval(gameLoop, 150);
-        }
-
-        function stopGame() {
-            gameActive = false;
-            clearInterval(gameInterval);
-        }
-
-        function gameLoop() {
-            if (!gameActive) return;
-            const head = {x: snake[0].x + direction.x, y: snake[0].y + direction.y};
+        async function sendToAI() {
+            const input = document.getElementById('aiInput');
+            const container = document.getElementById('chatBubbles');
+            const typing = document.getElementById('typingIndicator');
+            const message = input.value.trim();
             
-            // Wall / Self Check
-            if (head.x < 0 || head.x >= 20 || head.y < 0 || head.y >= 20 || snake.some(s => s.x === head.x && s.y === head.y)) {
-                alert("Game Over! Score: " + gameScore);
-                startGame();
-                return;
-            }
+            if (!message) return;
 
-            snake.unshift(head);
-            if (head.x === food.x && head.y === food.y) {
-                gameScore++;
-                document.getElementById('game-score').innerText = gameScore;
-                gainXp(5);
-                food = {x: Math.floor(Math.random()*20), y: Math.floor(Math.random()*20)};
-            } else {
-                snake.pop();
-            }
-            renderGame();
+            // Add user message
+            const userMsg = document.createElement('div');
+            userMsg.className = "flex items-start justify-end space-x-2";
+            userMsg.innerHTML = `<div class="bg-indigo-600 rounded-2xl rounded-tr-none p-3 text-xs max-w-[80%]">${message}</div>`;
+            container.appendChild(userMsg);
+            
+            input.value = '';
+            container.scrollTop = container.scrollHeight;
+
+            // Show typing
+            typing.classList.remove('hidden');
+
+            // Simulate Nova Response
+            setTimeout(() => {
+                typing.classList.add('hidden');
+                const novaMsg = document.createElement('div');
+                novaMsg.className = "flex items-start space-x-2";
+                
+                let response = "";
+                const lowerMsg = message.toLowerCase();
+
+                if (lowerMsg.includes('game') || lowerMsg.includes('play')) {
+                    response = "I highly recommend trying out **Ragdoll Archers**! It has great physics. Or if you want something fast, **Moto X3M** is a classic.";
+                } else if (lowerMsg.includes('tv') || lowerMsg.includes('watch')) {
+                    response = "You can use the **Sanctuary TV** tab to stream videos. Just paste a YouTube link and I'll help you get it set up!";
+                } else if (lowerMsg.includes('hi') || lowerMsg.includes('hello')) {
+                    response = "Hello traveler! I'm here to make your time in the Sanctuary awesome. What can I do for you today?";
+                } else {
+                    response = "That sounds interesting! I'm still learning about all the features here, but I can definitely help you navigate the library or TV sections.";
+                }
+
+                novaMsg.innerHTML = `
+                    <div class="w-6 h-6 bg-indigo-600 rounded-full flex items-center justify-center text-[10px]">AI</div>
+                    <div class="bg-slate-800 rounded-2xl rounded-tl-none p-3 text-xs max-w-[80%]">${response}</div>
+                `;
+                container.appendChild(novaMsg);
+                container.scrollTop = container.scrollHeight;
+            }, 1000);
         }
 
-        function renderGame() {
-            for (let i = 0; i < 400; i++) {
-                const el = document.getElementById(`dot-${i}`);
-                el.style.backgroundColor = 'transparent';
-                el.style.borderRadius = '0';
-                el.style.boxShadow = 'none';
-            }
-            snake.forEach((s, idx) => {
-                const el = document.getElementById(`dot-${s.y * 20 + s.x}`);
-                el.style.backgroundColor = idx === 0 ? '#fb7185' : '#e11d48';
-                el.style.borderRadius = '4px';
-            });
-            const foodEl = document.getElementById(`dot-${food.y * 20 + food.x}`);
-            foodEl.style.backgroundColor = '#34d399';
-            foodEl.style.borderRadius = '50%';
-            foodEl.style.boxShadow = '0 0 10px #34d399';
+        // Game Launching
+        function launchGame(name) {
+            document.getElementById('gameName').innerText = name;
+            document.getElementById('modalTitle').innerText = "SYNCING GAME DATA";
+            document.getElementById('gameModal').classList.add('active-modal');
+            
+            setTimeout(() => {
+                document.getElementById('modalTitle').innerText = name.toUpperCase();
+                document.getElementById('loadingUI').innerHTML = `
+                    <div class="bg-slate-900 rounded-xl p-8 mb-6 border border-slate-800">
+                        <i class="fas fa-gamepad text-5xl text-indigo-500 mb-4"></i>
+                        <p class="text-sm text-gray-300">The game "${name}" is now ready! Open in arena mode?</p>
+                    </div>
+                    <button onclick="closeModal()" class="w-full bg-indigo-600 py-3 rounded-xl font-bold hover:bg-indigo-500 transition shadow-lg uppercase tracking-widest">Enter Arena</button>
+                `;
+            }, 1200);
         }
 
-        function changeDir(x, y) {
-            if (direction.x !== -x && direction.y !== -y) direction = {x, y};
+        function closeModal() {
+            document.getElementById('gameModal').classList.remove('active-modal');
+            setTimeout(() => {
+                document.getElementById('loadingUI').innerHTML = `
+                    <div class="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
+                    <h3 id="modalTitle" class="text-2xl font-orbitron font-bold mb-2 tracking-widest">LOADING...</h3>
+                    <p class="text-gray-400 text-sm">Preparing Sanctuary server for <span id="gameName" class="text-indigo-400 font-bold">Game</span></p>
+                `;
+            }, 300);
         }
 
-        document.addEventListener('keydown', e => {
-            if (mode === 'game') {
-                if (e.key === "ArrowUp") changeDir(0, -1);
-                if (e.key === "ArrowDown") changeDir(0, 1);
-                if (e.key === "ArrowLeft") changeDir(-1, 0);
-                if (e.key === "ArrowRight") changeDir(1, 0);
-            }
-        });
-
-        function toggleFullscreen() {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen();
-                document.getElementById('fs-icon').innerText = "❌";
-            } else {
-                document.exitFullscreen();
-                document.getElementById('fs-icon').innerText = "⛶";
+        function launchTV() {
+            const url = document.getElementById('tvUrl').value;
+            if(url) {
+                launchGame('Sanctuary TV Stream');
             }
         }
     </script>
