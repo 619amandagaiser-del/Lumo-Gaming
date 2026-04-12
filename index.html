@@ -1,490 +1,435 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { 
-  Gamepad2, 
-  BookOpen, 
-  Timer, 
-  CheckCircle2, 
-  Trophy, 
-  Settings, 
-  Music, 
-  Pause, 
-  Play, 
-  RotateCcw,
-  Sword,
-  Scroll,
-  Zap,
-  Flame,
-  ChevronUp,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  Maximize2,
-  Minimize2
-} from 'lucide-react';
-
-const App = () => {
-  // --- STATE ---
-  const [mode, setMode] = useState('study'); // 'study' or 'game'
-  const [xp, setXp] = useState(() => Number(localStorage.getItem('hub_xp')) || 0);
-  const [level, setLevel] = useState(() => Math.floor(xp / 100) + 1);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  
-  // Timer State
-  const [timeLeft, setTimeLeft] = useState(25 * 60);
-  const [isActive, setIsActive] = useState(false);
-  
-  // Tasks State
-  const [tasks, setTasks] = useState(() => {
-    const saved = localStorage.getItem('hub_tasks');
-    return saved ? JSON.parse(saved) : [];
-  });
-  const [newTask, setNewTask] = useState('');
-
-  // Snake Game State
-  const [snake, setSnake] = useState([{ x: 10, y: 10 }]);
-  const [food, setFood] = useState({ x: 5, y: 5 });
-  const [direction, setDirection] = useState({ x: 0, y: -1 });
-  const [isGameOver, setIsGameOver] = useState(false);
-  const [gameScore, setGameScore] = useState(0);
-
-  const containerRef = useRef(null);
-
-  // --- EFFECTS ---
-  
-  // Persistence
-  useEffect(() => {
-    localStorage.setItem('hub_xp', xp.toString());
-    setLevel(Math.floor(xp / 100) + 1);
-  }, [xp]);
-
-  useEffect(() => {
-    localStorage.setItem('hub_tasks', JSON.stringify(tasks));
-  }, [tasks]);
-
-  // Fullscreen Listener
-  useEffect(() => {
-    const handleFsChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
-    };
-    document.addEventListener('fullscreenchange', handleFsChange);
-    return () => document.removeEventListener('fullscreenchange', handleFsChange);
-  }, []);
-
-  // Timer Logic
-  useEffect(() => {
-    let interval = null;
-    if (isActive && timeLeft > 0) {
-      interval = setInterval(() => {
-        setTimeLeft((prev) => prev - 1);
-      }, 1000);
-    } else if (timeLeft === 0) {
-      setIsActive(false);
-      gainXp(50);
-      setTimeLeft(25 * 60);
-    }
-    return () => clearInterval(interval);
-  }, [isActive, timeLeft]);
-
-  // Snake Game Logic
-  const moveSnake = useCallback(() => {
-    if (isGameOver || mode === 'study') return;
-
-    const newSnake = [...snake];
-    const head = { x: newSnake[0].x + direction.x, y: newSnake[0].y + direction.y };
-
-    // Wall collision
-    if (head.x < 0 || head.x >= 20 || head.y < 0 || head.y >= 20) {
-      setIsGameOver(true);
-      return;
-    }
-
-    // Self collision
-    if (newSnake.some(segment => segment.x === head.x && segment.y === head.y)) {
-      setIsGameOver(true);
-      return;
-    }
-
-    newSnake.unshift(head);
-
-    // Food collision
-    if (head.x === food.x && head.y === food.y) {
-      setGameScore(prev => prev + 1);
-      gainXp(5);
-      setFood({
-        x: Math.floor(Math.random() * 20),
-        y: Math.floor(Math.random() * 20)
-      });
-    } else {
-      newSnake.pop();
-    }
-
-    setSnake(newSnake);
-  }, [snake, direction, food, isGameOver, mode]);
-
-  useEffect(() => {
-    const interval = setInterval(moveSnake, 150);
-    return () => clearInterval(interval);
-  }, [moveSnake]);
-
-  // Key Listeners
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (mode === 'game') {
-        switch (e.key) {
-          case 'ArrowUp': if (direction.y !== 1) setDirection({ x: 0, y: -1 }); break;
-          case 'ArrowDown': if (direction.y !== -1) setDirection({ x: 0, y: 1 }); break;
-          case 'ArrowLeft': if (direction.x !== 1) setDirection({ x: -1, y: 0 }); break;
-          case 'ArrowRight': if (direction.x !== -1) setDirection({ x: 1, y: 0 }); break;
-        }
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [direction, mode]);
-
-  // --- ACTIONS ---
-  const gainXp = (amount) => {
-    setXp(prev => prev + amount);
-  };
-
-  const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      containerRef.current.requestFullscreen().catch(err => {
-        console.error(`Error attempting to enable full-screen mode: ${err.message}`);
-      });
-    } else {
-      document.exitFullscreen();
-    }
-  };
-
-  const toggleTimer = () => setIsActive(!isActive);
-  const resetTimer = () => {
-    setIsActive(false);
-    setTimeLeft(25 * 60);
-  };
-
-  const addTask = (e) => {
-    e.preventDefault();
-    if (!newTask.trim()) return;
-    const taskObj = { id: Date.now(), text: newTask, completed: false, type: mode === 'study' ? 'Quest' : 'Mission' };
-    setTasks([taskObj, ...tasks]);
-    setNewTask('');
-  };
-
-  const completeTask = (id) => {
-    setTasks(tasks.map(t => {
-      if (t.id === id && !t.completed) {
-        gainXp(20);
-        return { ...t, completed: true };
-      }
-      return t;
-    }));
-  };
-
-  const resetGame = () => {
-    setSnake([{ x: 10, y: 10 }]);
-    setDirection({ x: 0, y: -1 });
-    setIsGameOver(false);
-    setGameScore(0);
-  };
-
-  const formatTime = (seconds) => {
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    return `${m}:${s < 10 ? '0' : ''}${s}`;
-  };
-
-  // --- THEMES ---
-  const isStudy = mode === 'study';
-  const themeClass = isStudy 
-    ? "bg-slate-50 text-slate-900" 
-    : "bg-zinc-950 text-zinc-100";
-  
-  const accentColor = isStudy ? "bg-indigo-600" : "bg-rose-600";
-  const cardBg = isStudy ? "bg-white border-slate-200" : "bg-zinc-900 border-zinc-800";
-
-  return (
-    <div 
-      ref={containerRef}
-      className={`min-h-screen transition-colors duration-500 font-sans ${themeClass} ${isFullscreen ? 'p-0' : ''}`}
-    >
-      {/* Navigation / Header */}
-      <nav className={`sticky top-0 z-50 border-b p-4 flex justify-between items-center ${cardBg} ${isFullscreen ? 'bg-opacity-95 backdrop-blur-md' : ''}`}>
-        <div className="flex items-center gap-2">
-          <div className={`p-2 rounded-lg ${accentColor} text-white`}>
-            {isStudy ? <BookOpen size={24} /> : <Gamepad2 size={24} />}
-          </div>
-          <h1 className="text-xl font-bold tracking-tight">
-            NEXUS <span className={isStudy ? "text-indigo-600" : "text-rose-600"}>{mode.toUpperCase()}</span>
-          </h1>
-        </div>
-
-        <div className="flex items-center gap-4 md:gap-6">
-          {/* XP Bar */}
-          <div className="hidden md:flex flex-col items-end gap-1">
-            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest opacity-70">
-              <Zap size={12} className="text-yellow-500" /> LVL {level} — {xp % 100}/100 XP
-            </div>
-            <div className="w-48 h-2 bg-gray-200 rounded-full overflow-hidden dark:bg-zinc-800">
-              <div 
-                className={`h-full transition-all duration-1000 ${accentColor}`}
-                style={{ width: `${xp % 100}%` }}
-              />
-            </div>
-          </div>
-
-          {/* Fullscreen Toggle */}
-          <button 
-            onClick={toggleFullscreen}
-            title="Toggle Fullscreen"
-            className={`p-2 rounded-xl transition-colors ${isStudy ? 'bg-slate-100 hover:bg-slate-200 text-slate-600' : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-400'}`}
-          >
-            {isFullscreen ? <Minimize2 size={20} /> : <Maximize2 size={20} />}
-          </button>
-
-          {/* Mode Switcher */}
-          <button 
-            onClick={() => setMode(isStudy ? 'game' : 'study')}
-            className={`relative flex items-center p-1 rounded-full w-16 md:w-20 h-8 md:h-10 transition-colors ${isStudy ? 'bg-slate-200' : 'bg-zinc-800'}`}
-          >
-            <div className={`absolute w-6 h-6 md:w-8 md:h-8 rounded-full shadow-md flex items-center justify-center transition-all transform ${isStudy ? 'translate-x-0 bg-white text-indigo-600' : 'translate-x-8 md:translate-x-10 bg-zinc-700 text-rose-500'}`}>
-              {isStudy ? <BookOpen size={14} /> : <Gamepad2 size={14} />}
-            </div>
-          </button>
-        </div>
-      </nav>
-
-      {/* Main Content */}
-      <main className={`max-w-6xl mx-auto p-4 md:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8 ${isFullscreen ? 'pt-12' : ''}`}>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus Gaming & Study Hub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .font-mono { font-family: 'JetBrains+Mono', monospace; }
+        .grid-snake { display: grid; grid-template-columns: repeat(20, 1fr); }
+        .snake-dot { border: 0.5px solid rgba(255,255,255,0.05); }
+        .transition-all { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         
-        {/* Left Column: Focus & Stats */}
-        <div className="lg:col-span-4 space-y-6">
-          {/* Timer Card */}
-          <section className={`p-8 rounded-3xl border-2 text-center shadow-xl ${cardBg} ${isStudy ? 'border-indigo-100' : 'border-rose-900/30'}`}>
-            <h2 className="text-sm font-bold uppercase tracking-[0.2em] opacity-60 mb-4 flex justify-center items-center gap-2">
-              <Timer size={18} /> {isStudy ? 'Focus Session' : 'Game Break'}
-            </h2>
-            <div className="text-6xl md:text-7xl font-mono font-black mb-8 tabular-nums tracking-tighter">
-              {formatTime(timeLeft)}
-            </div>
-            <div className="flex justify-center gap-4">
-              <button 
-                onClick={toggleTimer}
-                className={`flex-1 py-4 rounded-2xl font-bold flex items-center justify-center gap-2 transition-transform active:scale-95 ${accentColor} text-white shadow-lg`}
-              >
-                {isActive ? <><Pause size={20} /> Pause</> : <><Play size={20} /> Start</>}
-              </button>
-              <button 
-                onClick={resetTimer}
-                className={`p-4 rounded-2xl border-2 transition-colors ${isStudy ? 'border-slate-200 hover:bg-slate-50' : 'border-zinc-800 hover:bg-zinc-800'}`}
-              >
-                <RotateCcw size={20} />
-              </button>
-            </div>
-          </section>
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .dark ::-webkit-scrollbar-thumb { background: #334155; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 transition-colors duration-500" id="body">
 
-          {/* Game Zone (Only in Game Mode) */}
-          {!isStudy && (
-            <section className={`p-6 rounded-3xl border ${cardBg} overflow-hidden shadow-2xl`}>
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="font-bold flex items-center gap-2">
-                  <Gamepad2 size={18} className="text-rose-500" /> Mini Arcade
-                </h3>
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-bold opacity-50 uppercase">Score</span>
-                  <span className="text-sm font-mono bg-rose-500/20 text-rose-400 px-2 py-1 rounded">{gameScore}</span>
+    <!-- Navigation -->
+    <nav id="navbar" class="sticky top-0 z-50 border-b p-4 flex justify-between items-center bg-white border-slate-200">
+        <div class="flex items-center gap-2">
+            <div id="mode-icon-container" class="p-2 rounded-lg bg-indigo-600 text-white">
+                <span id="nav-icon">📖</span>
+            </div>
+            <h1 class="text-xl font-bold tracking-tight">
+                NEXUS <span id="mode-text" class="text-indigo-600">STUDY</span>
+            </h1>
+        </div>
+
+        <div class="flex items-center gap-4 md:gap-6">
+            <!-- XP Bar -->
+            <div class="hidden md:flex flex-col items-end gap-1">
+                <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-widest opacity-70">
+                    ⚡ LVL <span id="display-level">1</span> — <span id="display-xp">0</span>/100 XP
                 </div>
-              </div>
-              
-              <div className="relative aspect-square bg-zinc-950 rounded-xl border border-zinc-800 overflow-hidden shadow-inner">
-                {isGameOver ? (
-                  <div className="absolute inset-0 z-10 bg-black/90 flex flex-col items-center justify-center p-4 text-center">
-                    <Trophy className="text-yellow-500 mb-2" size={32} />
-                    <p className="font-bold text-xl mb-1">GAME OVER</p>
-                    <p className="text-sm text-yellow-500/80 mb-4 font-mono">+{gameScore * 5} XP CLAIMED</p>
-                    <button 
-                      onClick={resetGame}
-                      className="px-8 py-3 bg-rose-600 hover:bg-rose-500 rounded-full font-bold text-sm transition-colors shadow-lg shadow-rose-900/40"
-                    >
-                      Restart Mission
+                <div class="w-48 h-2 bg-slate-200 rounded-full overflow-hidden">
+                    <div id="xp-progress" class="h-full bg-indigo-600 transition-all duration-1000" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <!-- Fullscreen -->
+            <button onclick="toggleFullscreen()" class="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600">
+                <span id="fs-icon">⛶</span>
+            </button>
+
+            <!-- Mode Switch -->
+            <button onclick="toggleMode()" class="relative flex items-center p-1 rounded-full w-16 h-8 bg-slate-200 transition-colors" id="mode-toggle-bg">
+                <div id="mode-toggle-knob" class="absolute w-6 h-6 rounded-full shadow-md flex items-center justify-center transition-all transform translate-x-0 bg-white text-indigo-600 text-xs">
+                    📖
+                </div>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-6xl mx-auto p-4 md:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <!-- Left Column -->
+        <div class="lg:col-span-4 space-y-6">
+            <!-- Timer -->
+            <section class="p-8 rounded-3xl border-2 text-center shadow-xl bg-white border-indigo-100" id="timer-card">
+                <h2 class="text-sm font-bold uppercase tracking-widest opacity-60 mb-4 flex justify-center items-center gap-2">
+                    ⏱️ <span id="timer-label">Focus Session</span>
+                </h2>
+                <div id="timer-display" class="text-6xl md:text-7xl font-mono font-black mb-8 tabular-nums tracking-tighter">25:00</div>
+                <div class="flex justify-center gap-4">
+                    <button id="timer-btn" onclick="toggleTimer()" class="flex-1 py-4 rounded-2xl font-bold flex items-center justify-center gap-2 bg-indigo-600 text-white shadow-lg active:scale-95 transition-all">
+                        ▶ Start
                     </button>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-20 h-full w-full" style={{ gridTemplateColumns: 'repeat(20, 1fr)' }}>
-                    {Array.from({ length: 400 }).map((_, i) => {
-                      const x = i % 20;
-                      const y = Math.floor(i / 20);
-                      const isSnake = snake.some(s => s.x === x && s.y === y);
-                      const isHead = snake[0].x === x && snake[0].y === y;
-                      const isFood = food.x === x && food.y === y;
-                      return (
-                        <div key={i} className={`aspect-square border-[0.5px] border-zinc-900/20 ${isHead ? 'bg-rose-400 z-10 rounded-sm' : isSnake ? 'bg-rose-600 rounded-sm' : isFood ? 'bg-emerald-400 rounded-full scale-75 animate-pulse shadow-[0_0_10px_rgba(52,211,153,0.6)]' : ''}`} />
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-
-              {/* Controls */}
-              <div className="grid grid-cols-3 gap-2 mt-6 max-w-[160px] mx-auto">
-                <div />
-                <button onClick={() => setDirection({ x: 0, y: -1 })} className="p-4 bg-zinc-800 hover:bg-zinc-700 active:scale-90 rounded-2xl flex justify-center transition-all"><ChevronUp size={24}/></button>
-                <div />
-                <button onClick={() => setDirection({ x: -1, y: 0 })} className="p-4 bg-zinc-800 hover:bg-zinc-700 active:scale-90 rounded-2xl flex justify-center transition-all"><ChevronLeft size={24}/></button>
-                <button onClick={() => setDirection({ x: 0, y: 1 })} className="p-4 bg-zinc-800 hover:bg-zinc-700 active:scale-90 rounded-2xl flex justify-center transition-all"><ChevronDown size={24}/></button>
-                <button onClick={() => setDirection({ x: 1, y: 0 })} className="p-4 bg-zinc-800 hover:bg-zinc-700 active:scale-90 rounded-2xl flex justify-center transition-all"><ChevronRight size={24}/></button>
-              </div>
+                    <button onclick="resetTimer()" class="p-4 rounded-2xl border-2 border-slate-200 hover:bg-slate-50 transition-all">
+                        ↺
+                    </button>
+                </div>
             </section>
-          )}
 
-          {/* Social Feed */}
-          <section className={`p-6 rounded-3xl border ${cardBg}`}>
-            <h3 className="font-bold flex items-center gap-2 mb-4 text-sm uppercase tracking-widest opacity-70">
-              <Flame size={16} className="text-orange-500" /> Live Feed
-            </h3>
-            <div className="space-y-4">
-              <div className="flex gap-3 items-start text-sm">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex-shrink-0" />
-                <div>
-                  <p className="opacity-80"><span className="font-bold">Neo_Learner</span> completed <span className="text-indigo-500">History Quest</span></p>
-                  <p className="text-[10px] opacity-50 uppercase">Just now</p>
+            <!-- Arcade (Hidden in Study Mode) -->
+            <section id="arcade-card" class="hidden p-6 rounded-3xl border bg-zinc-900 border-zinc-800 overflow-hidden shadow-2xl text-white">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold flex items-center gap-2">🎮 Mini Arcade</h3>
+                    <div class="text-sm font-mono bg-rose-500/20 text-rose-400 px-2 py-1 rounded">Score: <span id="game-score">0</span></div>
                 </div>
-              </div>
-              <div className="flex gap-3 items-start text-sm">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-rose-500 to-orange-600 flex-shrink-0" />
-                <div>
-                  <p className="opacity-80"><span className="font-bold">Glitch_Snake</span> set a new high score</p>
-                  <p className="text-[10px] opacity-50 uppercase">14 mins ago</p>
+                <div id="game-container" class="relative aspect-square bg-black rounded-xl border border-zinc-800 grid-snake">
+                    <!-- Game pixels generated by JS -->
                 </div>
-              </div>
-            </div>
-          </section>
-        </div>
-
-        {/* Right Column: Tasks & Widgets */}
-        <div className="lg:col-span-8 space-y-6">
-          
-          {/* Dynamic Welcome Banner */}
-          <div className={`p-8 md:p-10 rounded-3xl relative overflow-hidden text-white shadow-2xl ${isStudy ? 'bg-gradient-to-br from-indigo-600 via-indigo-500 to-blue-500' : 'bg-gradient-to-br from-zinc-900 via-rose-700 to-rose-600'}`}>
-            <div className="relative z-10">
-              <div className="inline-block px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-[10px] font-bold uppercase tracking-widest mb-4">
-                System Status: Online
-              </div>
-              <h2 className="text-3xl md:text-4xl font-black mb-3 leading-tight">
-                {isStudy ? "Forge Your Future." : "Level Up Your Game."}
-              </h2>
-              <p className="opacity-90 max-w-md text-sm md:text-base leading-relaxed">
-                {isStudy 
-                  ? "Distraction-free environment engaged. Focus on your objectives and earn the loot you deserve."
-                  : "Welcome to the Nexus Arcade. Take a well-earned break and sharpen your reflexes."}
-              </p>
-            </div>
-            {/* Background Decoration */}
-            <div className="absolute right-[-40px] bottom-[-40px] opacity-10 transform rotate-12 scale-150 pointer-events-none">
-              {isStudy ? <Scroll size={240} /> : <Sword size={240} />}
-            </div>
-          </div>
-
-          {/* Task Manager */}
-          <section className={`p-6 md:p-8 rounded-3xl border shadow-sm ${cardBg}`}>
-            <div className="flex justify-between items-center mb-8">
-              <h3 className="text-xl font-bold flex items-center gap-3">
-                <div className={`p-2 rounded-xl ${isStudy ? 'bg-indigo-50 text-indigo-600' : 'bg-rose-950 text-rose-500'}`}>
-                  <CheckCircle2 size={24} />
+                <div class="grid grid-cols-3 gap-2 mt-6 max-w-[140px] mx-auto">
+                    <div></div><button onclick="changeDir(0,-1)" class="p-3 bg-zinc-800 rounded-xl flex justify-center">▲</button><div></div>
+                    <button onclick="changeDir(-1,0)" class="p-3 bg-zinc-800 rounded-xl flex justify-center">◀</button>
+                    <button onclick="changeDir(0,1)" class="p-3 bg-zinc-800 rounded-xl flex justify-center">▼</button>
+                    <button onclick="changeDir(1,0)" class="p-3 bg-zinc-800 rounded-xl flex justify-center">▶</button>
                 </div>
-                {isStudy ? "Active Quests" : "Battle Log"}
-              </h3>
-              <div className="flex items-center gap-2">
-                <div className={`h-2 w-2 rounded-full animate-pulse ${isStudy ? 'bg-indigo-500' : 'bg-rose-500'}`} />
-                <span className="text-[10px] font-bold opacity-60 uppercase tracking-tighter">
-                  {tasks.filter(t => !t.completed).length} Objectives
-                </span>
-              </div>
-            </div>
+            </section>
 
-            <form onSubmit={addTask} className="mb-8 flex gap-3">
-              <input 
-                type="text" 
-                value={newTask}
-                onChange={(e) => setNewTask(e.target.value)}
-                placeholder={isStudy ? "Initialize a new study quest..." : "Deploy a new mission..."}
-                className={`flex-1 p-4 rounded-2xl outline-none border transition-all text-sm font-medium ${isStudy ? 'bg-slate-50 border-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100' : 'bg-zinc-800/50 border-zinc-700 focus:border-rose-500 focus:ring-4 focus:ring-rose-900/20'}`}
-              />
-              <button className={`px-8 rounded-2xl font-bold text-white transition-all active:scale-95 shadow-lg ${accentColor} ${isStudy ? 'shadow-indigo-200' : 'shadow-rose-900/30'}`}>
-                Deploy
-              </button>
-            </form>
-
-            <div className="space-y-3">
-              {tasks.length === 0 ? (
-                <div className="text-center py-16">
-                  <div className="opacity-20 mb-2 flex justify-center"><Scroll size={48} /></div>
-                  <p className="opacity-40 text-sm italic font-medium">The log is empty. Start a new session to begin.</p>
-                </div>
-              ) : (
-                tasks.map(task => (
-                  <div key={task.id} className={`group p-5 rounded-2xl flex items-center justify-between border transition-all ${task.completed ? 'opacity-40 grayscale-[0.5]' : 'hover:shadow-md hover:border-transparent cursor-default'} ${cardBg} ${!task.completed && (isStudy ? 'hover:bg-indigo-50/30' : 'hover:bg-zinc-800/40')}`}>
-                    <div className="flex items-center gap-4">
-                      <button 
-                        onClick={() => completeTask(task.id)}
-                        className={`w-7 h-7 rounded-lg border-2 flex items-center justify-center transition-all ${task.completed ? 'bg-green-500 border-green-500 shadow-lg shadow-green-500/30' : isStudy ? 'border-slate-200 hover:border-indigo-500 hover:bg-indigo-50' : 'border-zinc-700 hover:border-rose-500 hover:bg-rose-900/20'}`}
-                      >
-                        {task.completed && <CheckCircle2 size={18} className="text-white" />}
-                      </button>
-                      <span className={`font-semibold text-sm md:text-base ${task.completed ? 'line-through opacity-60' : ''}`}>
-                        {task.text}
-                      </span>
+            <!-- Social Feed -->
+            <section class="p-6 rounded-3xl border bg-white border-slate-200" id="feed-card">
+                <h3 class="font-bold flex items-center gap-2 mb-4 text-xs uppercase tracking-widest opacity-70">🔥 Live Feed</h3>
+                <div class="space-y-4" id="social-list">
+                    <div class="flex gap-3 items-start text-sm">
+                        <div class="w-8 h-8 rounded-full bg-indigo-500 flex-shrink-0"></div>
+                        <div><p class="opacity-80"><b>User_102</b> completed Math Quest</p><p class="text-[10px] opacity-50 uppercase">Just now</p></div>
                     </div>
-                    {!task.completed && (
-                      <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-yellow-600 dark:text-yellow-500 bg-yellow-50 dark:bg-yellow-900/20 px-3 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
-                        +20 XP
-                      </div>
-                    )}
-                  </div>
-                ))
-              )}
-            </div>
-          </section>
-
-          {/* Quick Links */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-8">
-            <div className={`p-6 rounded-3xl border flex items-center gap-5 cursor-pointer hover:shadow-xl transition-all hover:-translate-y-1 ${cardBg}`}>
-              <div className="p-4 rounded-2xl bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400 shadow-inner">
-                <Music size={28} />
-              </div>
-              <div>
-                <h4 className="font-bold text-lg leading-tight">Nexus Beats</h4>
-                <p className="text-sm opacity-60 font-medium">{isStudy ? "Deep Focus Lo-fi" : "Adrenaline Mix"}</p>
-              </div>
-            </div>
-            <div className={`p-6 rounded-3xl border flex items-center gap-5 cursor-pointer hover:shadow-xl transition-all hover:-translate-y-1 ${cardBg}`}>
-              <div className="p-4 rounded-2xl bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400 shadow-inner">
-                <Trophy size={28} />
-              </div>
-              <div>
-                <h4 className="font-bold text-lg leading-tight">Rankings</h4>
-                <p className="text-sm opacity-60 font-medium">Global Achievement Hub</p>
-              </div>
-            </div>
-          </div>
+                </div>
+            </section>
         </div>
-      </main>
 
-      {/* Level Up Pop */}
-      {xp > 0 && xp % 100 === 0 && (
-         <div className="fixed bottom-10 right-10 animate-bounce bg-yellow-400 text-black px-8 py-4 rounded-full font-black shadow-[0_20px_50px_rgba(234,179,8,0.4)] flex items-center gap-3 z-[100] border-4 border-white">
-            <Trophy size={24} /> LEVEL UP!
-         </div>
-      )}
+        <!-- Right Column -->
+        <div class="lg:col-span-8 space-y-6">
+            <!-- Banner -->
+            <div id="banner" class="p-8 md:p-10 rounded-3xl relative overflow-hidden text-white shadow-2xl bg-gradient-to-br from-indigo-600 to-blue-500">
+                <div class="relative z-10">
+                    <div class="inline-block px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-[10px] font-bold uppercase tracking-widest mb-4">System Online</div>
+                    <h2 id="banner-title" class="text-3xl md:text-4xl font-black mb-3 leading-tight">Forge Your Future.</h2>
+                    <p id="banner-desc" class="opacity-90 max-w-md text-sm leading-relaxed">Focus on your objectives and earn the loot you deserve.</p>
+                </div>
+            </div>
 
-      {/* Footer Info (Hidden in Fullscreen) */}
-      {!isFullscreen && (
-        <footer className="text-center py-10 opacity-30 text-xs font-bold tracking-widest uppercase">
-          &copy; 2024 Nexus Gaming & Study Hub // Protocol v2.4.0
-        </footer>
-      )}
+            <!-- Tasks -->
+            <section class="p-6 md:p-8 rounded-3xl border bg-white border-slate-200 shadow-sm" id="tasks-card">
+                <div class="flex justify-between items-center mb-8">
+                    <h3 class="text-xl font-bold flex items-center gap-3">✅ <span id="task-title">Active Quests</span></h3>
+                </div>
+
+                <form onsubmit="addTask(event)" class="mb-8 flex gap-3">
+                    <input id="task-input" type="text" placeholder="New quest name..." class="flex-1 p-4 rounded-2xl outline-none border bg-slate-50 border-slate-200 focus:border-indigo-500 text-sm">
+                    <button class="px-8 rounded-2xl font-bold text-white bg-indigo-600 shadow-lg active:scale-95 transition-all" id="add-btn">Add</button>
+                </form>
+
+                <div id="task-list" class="space-y-3">
+                    <!-- Tasks injected here -->
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Level Up Modal -->
+    <div id="lvl-up" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+        <div class="bg-white p-8 rounded-3xl text-center shadow-2xl border-4 border-yellow-400 animate-bounce">
+            <div class="text-6xl mb-4">🏆</div>
+            <h2 class="text-3xl font-black mb-2">LEVEL UP!</h2>
+            <p class="text-slate-600 mb-6">You've reached level <span id="new-lvl">2</span></p>
+            <button onclick="closeLvlModal()" class="px-8 py-3 bg-indigo-600 text-white rounded-full font-bold">Keep Going</button>
+        </div>
     </div>
-  );
-};
 
-export default App;
+    <script>
+        // State
+        let mode = 'study';
+        let xp = parseInt(localStorage.getItem('hub_xp')) || 0;
+        let tasks = JSON.parse(localStorage.getItem('hub_tasks')) || [];
+        let timeLeft = 25 * 60;
+        let timerActive = false;
+        let timerInterval;
+
+        // Game State
+        let snake = [{x: 10, y: 10}];
+        let food = {x: 5, y: 5};
+        let direction = {x: 0, y: -1};
+        let gameScore = 0;
+        let gameActive = false;
+        let gameInterval;
+
+        // Init
+        window.onload = () => {
+            updateUI();
+            renderTasks();
+            initGameGrid();
+        };
+
+        function toggleMode() {
+            mode = mode === 'study' ? 'game' : 'study';
+            
+            // UI Classes
+            const body = document.getElementById('body');
+            const nav = document.getElementById('navbar');
+            const banner = document.getElementById('banner');
+            const arcade = document.getElementById('arcade-card');
+            const timerCard = document.getElementById('timer-card');
+            const tasksCard = document.getElementById('tasks-card');
+            const feedCard = document.getElementById('feed-card');
+            const knob = document.getElementById('mode-toggle-knob');
+            const toggleBg = document.getElementById('mode-toggle-bg');
+            const btn = document.getElementById('timer-btn');
+            const addBtn = document.getElementById('add-btn');
+
+            if (mode === 'game') {
+                body.className = "bg-zinc-950 text-zinc-100 transition-colors duration-500";
+                nav.className = "sticky top-0 z-50 border-b p-4 flex justify-between items-center bg-zinc-900 border-zinc-800";
+                banner.className = "p-8 md:p-10 rounded-3xl relative overflow-hidden text-white shadow-2xl bg-gradient-to-br from-zinc-900 via-rose-700 to-rose-600";
+                arcade.classList.remove('hidden');
+                timerCard.className = "p-8 rounded-3xl border-2 text-center shadow-xl bg-zinc-900 border-rose-900/30";
+                tasksCard.className = "p-6 md:p-8 rounded-3xl border bg-zinc-900 border-zinc-800 shadow-sm";
+                feedCard.className = "p-6 rounded-3xl border bg-zinc-900 border-zinc-800";
+                knob.className = "absolute w-6 h-6 rounded-full shadow-md flex items-center justify-center transition-all transform translate-x-8 bg-zinc-700 text-rose-500 text-xs";
+                knob.innerText = "🎮";
+                toggleBg.className = "relative flex items-center p-1 rounded-full w-16 h-8 bg-zinc-800 transition-colors";
+                btn.className = "flex-1 py-4 rounded-2xl font-bold flex items-center justify-center gap-2 bg-rose-600 text-white shadow-lg active:scale-95 transition-all";
+                addBtn.className = "px-8 rounded-2xl font-bold text-white bg-rose-600 shadow-lg active:scale-95 transition-all";
+                
+                document.getElementById('mode-text').innerText = "GAME";
+                document.getElementById('mode-text').className = "text-rose-600";
+                document.getElementById('mode-icon-container').className = "p-2 rounded-lg bg-rose-600 text-white";
+                document.getElementById('nav-icon').innerText = "🎮";
+                document.getElementById('banner-title').innerText = "Level Up Your Game.";
+                document.getElementById('banner-desc').innerText = "Welcome to the Nexus Arcade. Take a break and sharpen your reflexes.";
+                document.getElementById('timer-label').innerText = "Game Break";
+                document.getElementById('task-title').innerText = "Battle Log";
+                startGame();
+            } else {
+                body.className = "bg-slate-50 text-slate-900 transition-colors duration-500";
+                nav.className = "sticky top-0 z-50 border-b p-4 flex justify-between items-center bg-white border-slate-200";
+                banner.className = "p-8 md:p-10 rounded-3xl relative overflow-hidden text-white shadow-2xl bg-gradient-to-br from-indigo-600 to-blue-500";
+                arcade.classList.add('hidden');
+                timerCard.className = "p-8 rounded-3xl border-2 text-center shadow-xl bg-white border-indigo-100";
+                tasksCard.className = "p-6 md:p-8 rounded-3xl border bg-white border-slate-200 shadow-sm";
+                feedCard.className = "p-6 rounded-3xl border bg-white border-slate-200";
+                knob.className = "absolute w-6 h-6 rounded-full shadow-md flex items-center justify-center transition-all transform translate-x-0 bg-white text-indigo-600 text-xs";
+                knob.innerText = "📖";
+                toggleBg.className = "relative flex items-center p-1 rounded-full w-16 h-8 bg-slate-200 transition-colors";
+                btn.className = "flex-1 py-4 rounded-2xl font-bold flex items-center justify-center gap-2 bg-indigo-600 text-white shadow-lg active:scale-95 transition-all";
+                addBtn.className = "px-8 rounded-2xl font-bold text-white bg-indigo-600 shadow-lg active:scale-95 transition-all";
+
+                document.getElementById('mode-text').innerText = "STUDY";
+                document.getElementById('mode-text').className = "text-indigo-600";
+                document.getElementById('mode-icon-container').className = "p-2 rounded-lg bg-indigo-600 text-white";
+                document.getElementById('nav-icon').innerText = "📖";
+                document.getElementById('banner-title').innerText = "Forge Your Future.";
+                document.getElementById('banner-desc').innerText = "Focus on your objectives and earn the loot you deserve.";
+                document.getElementById('timer-label').innerText = "Focus Session";
+                document.getElementById('task-title').innerText = "Active Quests";
+                stopGame();
+            }
+            renderTasks();
+            updateUI();
+        }
+
+        // Logic Functions
+        function gainXp(amt) {
+            let oldLvl = Math.floor(xp / 100);
+            xp += amt;
+            let newLvl = Math.floor(xp / 100);
+            localStorage.setItem('hub_xp', xp);
+            if (newLvl > oldLvl) {
+                document.getElementById('new-lvl').innerText = newLvl + 1;
+                document.getElementById('lvl-up').classList.remove('hidden');
+            }
+            updateUI();
+        }
+
+        function updateUI() {
+            const lvl = Math.floor(xp / 100) + 1;
+            const progress = xp % 100;
+            document.getElementById('display-level').innerText = lvl;
+            document.getElementById('display-xp').innerText = progress;
+            document.getElementById('xp-progress').style.width = progress + "%";
+        }
+
+        function closeLvlModal() { document.getElementById('lvl-up').classList.add('hidden'); }
+
+        // Timer
+        function toggleTimer() {
+            timerActive = !timerActive;
+            const btn = document.getElementById('timer-btn');
+            if (timerActive) {
+                btn.innerText = "⏸ Pause";
+                timerInterval = setInterval(() => {
+                    if (timeLeft > 0) {
+                        timeLeft--;
+                        updateTimerDisplay();
+                    } else {
+                        gainXp(50);
+                        resetTimer();
+                    }
+                }, 1000);
+            } else {
+                btn.innerText = "▶ Start";
+                clearInterval(timerInterval);
+            }
+        }
+
+        function resetTimer() {
+            clearInterval(timerInterval);
+            timerActive = false;
+            timeLeft = 25 * 60;
+            document.getElementById('timer-btn').innerText = "▶ Start";
+            updateTimerDisplay();
+        }
+
+        function updateTimerDisplay() {
+            const m = Math.floor(timeLeft / 60);
+            const s = timeLeft % 60;
+            document.getElementById('timer-display').innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
+        }
+
+        // Tasks
+        function addTask(e) {
+            e.preventDefault();
+            const input = document.getElementById('task-input');
+            if (!input.value.trim()) return;
+            tasks.unshift({ id: Date.now(), text: input.value, done: false });
+            input.value = "";
+            saveTasks();
+            renderTasks();
+        }
+
+        function completeTask(id) {
+            tasks = tasks.map(t => {
+                if (t.id === id && !t.done) {
+                    gainXp(20);
+                    return { ...t, done: true };
+                }
+                return t;
+            });
+            saveTasks();
+            renderTasks();
+        }
+
+        function saveTasks() { localStorage.setItem('hub_tasks', JSON.stringify(tasks)); }
+
+        function renderTasks() {
+            const list = document.getElementById('task-list');
+            list.innerHTML = tasks.length ? "" : '<div class="text-center py-10 opacity-30 italic">No objectives logged.</div>';
+            tasks.forEach(t => {
+                const item = document.createElement('div');
+                item.className = `p-4 rounded-xl flex items-center justify-between border transition-all ${t.done ? 'opacity-40 bg-slate-100' : 'bg-white hover:border-indigo-500'}`;
+                if (mode === 'game' && !t.done) item.className = `p-4 rounded-xl flex items-center justify-between border border-zinc-800 bg-zinc-900 transition-all hover:border-rose-500`;
+                
+                item.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <button onclick="completeTask(${t.id})" class="w-6 h-6 border-2 rounded ${t.done ? 'bg-green-500 border-green-500' : 'border-slate-300'}">
+                            ${t.done ? '✓' : ''}
+                        </button>
+                        <span class="${t.done ? 'line-through' : 'font-semibold'}">${t.text}</span>
+                    </div>
+                    ${!t.done ? `<span class="text-[10px] font-bold text-yellow-500">+20 XP</span>` : ''}
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        // Game (Snake)
+        function initGameGrid() {
+            const grid = document.getElementById('game-container');
+            grid.innerHTML = "";
+            for (let i = 0; i < 400; i++) {
+                const dot = document.createElement('div');
+                dot.id = `dot-${i}`;
+                dot.className = "snake-dot";
+                grid.appendChild(dot);
+            }
+        }
+
+        function startGame() {
+            gameActive = true;
+            snake = [{x: 10, y: 10}];
+            gameScore = 0;
+            document.getElementById('game-score').innerText = "0";
+            gameInterval = setInterval(gameLoop, 150);
+        }
+
+        function stopGame() {
+            gameActive = false;
+            clearInterval(gameInterval);
+        }
+
+        function gameLoop() {
+            if (!gameActive) return;
+            const head = {x: snake[0].x + direction.x, y: snake[0].y + direction.y};
+            
+            // Wall / Self Check
+            if (head.x < 0 || head.x >= 20 || head.y < 0 || head.y >= 20 || snake.some(s => s.x === head.x && s.y === head.y)) {
+                alert("Game Over! Score: " + gameScore);
+                startGame();
+                return;
+            }
+
+            snake.unshift(head);
+            if (head.x === food.x && head.y === food.y) {
+                gameScore++;
+                document.getElementById('game-score').innerText = gameScore;
+                gainXp(5);
+                food = {x: Math.floor(Math.random()*20), y: Math.floor(Math.random()*20)};
+            } else {
+                snake.pop();
+            }
+            renderGame();
+        }
+
+        function renderGame() {
+            for (let i = 0; i < 400; i++) {
+                const el = document.getElementById(`dot-${i}`);
+                el.style.backgroundColor = 'transparent';
+                el.style.borderRadius = '0';
+                el.style.boxShadow = 'none';
+            }
+            snake.forEach((s, idx) => {
+                const el = document.getElementById(`dot-${s.y * 20 + s.x}`);
+                el.style.backgroundColor = idx === 0 ? '#fb7185' : '#e11d48';
+                el.style.borderRadius = '4px';
+            });
+            const foodEl = document.getElementById(`dot-${food.y * 20 + food.x}`);
+            foodEl.style.backgroundColor = '#34d399';
+            foodEl.style.borderRadius = '50%';
+            foodEl.style.boxShadow = '0 0 10px #34d399';
+        }
+
+        function changeDir(x, y) {
+            if (direction.x !== -x && direction.y !== -y) direction = {x, y};
+        }
+
+        document.addEventListener('keydown', e => {
+            if (mode === 'game') {
+                if (e.key === "ArrowUp") changeDir(0, -1);
+                if (e.key === "ArrowDown") changeDir(0, 1);
+                if (e.key === "ArrowLeft") changeDir(-1, 0);
+                if (e.key === "ArrowRight") changeDir(1, 0);
+            }
+        });
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+                document.getElementById('fs-icon').innerText = "❌";
+            } else {
+                document.exitFullscreen();
+                document.getElementById('fs-icon').innerText = "⛶";
+            }
+        }
+    </script>
+</body>
+</html>
