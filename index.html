@@ -1,590 +1,671 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lumo Gaming Hub & Proxy</title>
-    <style>
-        :root {
-            /* Default Theme Variables (will be overridden by JS) */
-            --bg-color: linear-gradient(145deg, #010310, #080c17);
-            --card-bg: #0a0e1a;
-            --text-main: #e0f2fe;
-            --text-muted: #bae6fd;
-            --accent: #3b82f6;
-            --accent-light: #93c5fd;
-            --accent-glow: rgba(59, 130, 246, 0.2);
-            --border: rgba(59, 130, 246, 0.3);
-            --primary: #01031d;
-            --secondary: #0a0e1a;
-            --active-tab: linear-gradient(145deg, #1e3a8a, var(--secondary));
-            --hover-danger: #f87171;
-        }
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>about:blank Opener</title>
+  <meta name="description" content="Open a URL in a new about:blank tab (when allowed by the browser)." />
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        
-        body {
-            background: var(--bg-color);
-            color: var(--text-main);
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-            transition: background 0.5s ease, color 0.5s ease;
-        }
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500,650,800&family=Inter:wght@400,500,600&display=swap" rel="stylesheet">
 
-        /* Header & Proxy Bar */
-        header {
-            background-color: var(--card-bg);
-            padding: 1rem 2rem;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            border-bottom: 1px solid var(--border);
-        }
+  <style>
+    :root{
+      --bg0:#0b0f14;
+      --bg1:#0e1621;
+      --ink:#eaf0ff;
+      --muted: rgba(234,240,255,.72);
+      --faint: rgba(234,240,255,.12);
 
-        .logo { font-size: 1.5rem; font-weight: bold; color: var(--accent); letter-spacing: 1px; }
-        
-        .proxy-container {
-            flex-grow: 1;
-            margin: 0 2rem;
-            display: flex;
-            gap: 10px;
-        }
+      --a:#9ef7d2;
+      --b:#a9b6ff;
+      --c:#ffd38a;
 
-        input[type="url"] {
-            width: 100%;
-            padding: 10px 15px;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            background: var(--primary);
-            color: var(--text-main);
-            outline: none;
-            transition: border-color 0.2s, background 0.2s;
-        }
+      --danger:#ff6b7a;
+      --ok:#62f6b5;
 
-        input[type="url"]:focus { border-color: var(--accent); }
+      --radius: 22px;
+      --shadow: 0 30px 70px rgba(0,0,0,.55);
+    }
 
-        button {
-            padding: 10px 20px;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            background: var(--secondary);
-            color: var(--text-main);
-            transition: all 0.2s;
-        }
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      color:var(--ink);
+      background:
+        radial-gradient(1200px 700px at 10% 15%, rgba(158,247,210,.14), transparent 60%),
+        radial-gradient(1100px 700px at 90% 10%, rgba(169,182,255,.16), transparent 58%),
+        radial-gradient(900px 700px at 70% 90%, rgba(255,211,138,.12), transparent 60%),
+        linear-gradient(180deg, var(--bg0), var(--bg1));
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      overflow-x:hidden;
+    }
 
-        .btn-go { background-color: var(--accent); color: white; border: none; }
-        .btn-go:hover { background-color: var(--accent-light); color: var(--primary); }
-        
-        .btn-clear { background-color: var(--secondary); }
-        .btn-clear:hover { background-color: var(--border); }
+    /* subtle grain */
+    body::before{
+      content:"";
+      position:fixed; inset:0;
+      pointer-events:none;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)' opacity='.26'/%3E%3C/svg%3E");
+      mix-blend-mode:overlay;
+      opacity:.18;
+    }
 
-        /* Theme Selector Styles */
-        .theme-selector {
-            position: absolute;
-            top: 60px;
-            right: 2rem;
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 1rem;
-            width: 250px;
-            max-height: 400px;
-            overflow-y: auto;
-            display: none;
-            box-shadow: 0 12px 24px var(--accent-glow);
-            z-index: 200;
-        }
+    a{ color:inherit; }
 
-        .theme-selector.active { display: block; }
+    .wrap{
+      min-height:100%;
+      display:grid;
+      grid-template-rows:auto 1fr auto;
+    }
 
-        .theme-title {
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            color: var(--text-muted);
-            margin-bottom: 0.5rem;
-            font-weight: bold;
-        }
+    header{
+      padding: clamp(18px, 3vw, 28px) clamp(18px, 5vw, 56px);
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:14px;
+      position:sticky;
+      top:0;
+      z-index:10;
+      backdrop-filter: blur(10px);
+      background: linear-gradient(180deg, rgba(10,14,20,.75), rgba(10,14,20,.35));
+      border-bottom: 1px solid rgba(255,255,255,.06);
+    }
 
-        .theme-item {
-            display: flex;
-            align-items: center;
-            padding: 10px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s;
-            margin-bottom: 5px;
-            position: relative;
-            overflow: hidden;
-        }
+    .brand{
+      display:flex; align-items:center; gap:12px;
+      min-width: 220px;
+    }
+    .mark{
+      width:40px; height:40px; border-radius:14px;
+      background:
+        radial-gradient(14px 14px at 30% 30%, rgba(255,255,255,.9), transparent 65%),
+        conic-gradient(from 210deg, rgba(158,247,210,.95), rgba(169,182,255,.95), rgba(255,211,138,.95), rgba(158,247,210,.95));
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+      border: 1px solid rgba(255,255,255,.18);
+      position:relative;
+      overflow:hidden;
+    }
+    .mark::after{
+      content:"";
+      position:absolute; inset:-40%;
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.55), transparent 45%);
+      transform: rotate(18deg);
+      opacity:.55;
+    }
+    .brand h1{
+      margin:0;
+      font-family: Fraunces, serif;
+      font-weight: 800;
+      letter-spacing: -.02em;
+      font-size: 18px;
+      line-height: 1.05;
+    }
+    .brand p{
+      margin:0;
+      color: var(--muted);
+      font-size: 12.5px;
+      line-height: 1.2;
+    }
 
-        .theme-item:hover {
-            background: var(--active-tab);
-            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-        }
+    .meta{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
 
-        .theme-color-strip {
-            width: 30px;
-            height: 30px;
-            border-radius: 6px;
-            margin-right: 10px;
-            border: 1px solid var(--border);
-        }
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:10px 12px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      color: rgba(234,240,255,.86);
+      font-size: 12.5px;
+      box-shadow: 0 10px 25px rgba(0,0,0,.18);
+    }
+    .dot{
+      width:8px; height:8px; border-radius:999px;
+      background: rgba(98,246,181,.9);
+      box-shadow: 0 0 0 3px rgba(98,246,181,.14);
+    }
 
-        .theme-name { font-size: 0.9rem; font-weight: 500; }
+    main{
+      padding: clamp(18px, 5vw, 56px);
+      display:grid;
+      align-items:center;
+    }
 
-        /* Main Layout */
-        main {
-            display: flex;
-            flex: 1;
-            overflow: hidden;
-        }
+    .layout{
+      display:grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap: clamp(18px, 3vw, 34px);
+      align-items:start;
+      max-width: 1120px;
+      margin: 0 auto;
+      position:relative;
+    }
 
-        /* Sidebar (Game List) */
-        aside {
-            width: 250px;
-            background-color: var(--card-bg);
-            padding: 1rem;
-            overflow-y: auto;
-            border-right: 1px solid var(--border);
-        }
+    /* floating linework */
+    .layout::before{
+      content:"";
+      position:absolute;
+      inset:-40px;
+      pointer-events:none;
+      background:
+        radial-gradient(800px 300px at 10% 20%, rgba(158,247,210,.10), transparent 60%),
+        radial-gradient(700px 280px at 90% 30%, rgba(169,182,255,.10), transparent 62%),
+        radial-gradient(600px 260px at 60% 90%, rgba(255,211,138,.09), transparent 60%);
+      filter: blur(0px);
+      opacity:.9;
+    }
 
-        .section-title {
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            color: var(--text-muted);
-            margin-bottom: 1rem;
-            margin-top: 1.5rem;
-        }
-        .section-title:first-child { margin-top: 0; }
+    .hero{
+      position:relative;
+      padding: clamp(18px, 2.6vw, 28px);
+      border-radius: var(--radius);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.025));
+      border: 1px solid rgba(255,255,255,.10);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
 
-        .game-item {
-            display: flex;
-            align-items: center;
-            padding: 10px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background 0.2s;
-            margin-bottom: 5px;
-        }
+    .hero::after{
+      content:"";
+      position:absolute; inset:-2px;
+      background:
+        radial-gradient(300px 180px at 15% 25%, rgba(158,247,210,.14), transparent 65%),
+        radial-gradient(320px 200px at 85% 20%, rgba(169,182,255,.14), transparent 65%),
+        radial-gradient(340px 220px at 70% 90%, rgba(255,211,138,.10), transparent 70%);
+      filter: blur(0px);
+      opacity:.9;
+      pointer-events:none;
+    }
 
-        .game-item:hover { background-color: var(--secondary); }
-        .game-icon { width: 30px; height: 30px; background: var(--accent); border-radius: 6px; margin-right: 10px; display: flex; align-items: center; justify-content: center; font-size: 12px; color: var(--primary); font-weight: bold;}
+    .hero > *{ position:relative; z-index:1; }
 
-        /* Content Area */
-        #content-area {
-            flex: 1;
-            padding: 2rem;
-            overflow-y: auto;
-            position: relative;
-        }
+    .kicker{
+      display:flex; gap:10px; align-items:center;
+      color: rgba(234,240,255,.86);
+      font-size: 13px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+    .kicker .line{
+      width: 34px; height: 1px; background: rgba(255,255,255,.22);
+    }
 
-        /* Game Grid View */
-        .game-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 1.5rem;
-        }
+    .hero h2{
+      margin: 0;
+      font-family: Fraunces, serif;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      font-size: clamp(34px, 4.4vw, 56px);
+      line-height: 1.02;
+    }
+    .hero h2 span{
+      background: linear-gradient(90deg, var(--a), var(--b), var(--c));
+      -webkit-background-clip: text;
+      background-clip:text;
+      color: transparent;
+    }
 
-        .game-card {
-            background: var(--card-bg);
-            border-radius: 12px;
-            overflow: hidden;
-            transition: transform 0.2s, border-color 0.2s;
-            cursor: pointer;
-            border: 1px solid var(--border);
-        }
+    .hero p{
+      margin: 14px 0 0 0;
+      color: var(--muted);
+      font-size: clamp(14.5px, 1.55vw, 16.5px);
+      line-height: 1.6;
+      max-width: 58ch;
+    }
 
-        .game-card:hover { transform: translateY(-5px); border-color: var(--accent); }
+    .panel{
+      margin-top: 18px;
+      padding: 14px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(10,14,20,.35);
+      backdrop-filter: blur(10px);
+    }
 
-        .card-img {
-            height: 120px;
-            background: linear-gradient(45deg, var(--secondary), var(--primary));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--text-muted);
-            font-size: 2rem;
-            font-weight: bold;
-        }
+    label{
+      display:block;
+      font-size: 12.5px;
+      color: rgba(234,240,255,.78);
+      margin-bottom: 8px;
+    }
 
-        .card-body { padding: 1rem; }
-        .card-title { font-weight: bold; margin-bottom: 0.5rem; color: var(--text-main); }
-        .card-desc { font-size: 0.85rem; color: var(--text-muted); }
+    .row{
+      display:grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items:center;
+    }
 
-        /* Proxy View (Iframe) */
-        .proxy-frame-container {
-            width: 100%;
-            height: 100%;
-            background: white;
-            border-radius: 8px;
-            overflow: hidden;
-            display: none; /* Hidden by default */
-        }
+    input[type="url"], input[type="text"]{
+      width:100%;
+      padding: 14px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.05);
+      color: var(--ink);
+      outline:none;
+      font-size: 14.5px;
+      transition: border-color .2s ease, background .2s ease, transform .2s ease;
+    }
+    input::placeholder{ color: rgba(234,240,255,.46); }
+    input:focus{
+      border-color: rgba(158,247,210,.55);
+      background: rgba(255,255,255,.07);
+      transform: translateY(-1px);
+    }
 
-        iframe { width: 100%; height: 100%; border: none; }
+    .actions{
+      display:flex;
+      flex-wrap:wrap;
+      gap: 10px;
+      margin-top: 12px;
+      align-items:center;
+    }
 
-        /* Status Bar */
-        footer {
-            padding: 0.5rem 2rem;
-            background: var(--primary);
-            color: var(--text-muted);
-            font-size: 0.8rem;
-            display: flex;
-            justify-content: space-between;
-            border-top: 1px solid var(--border);
-        }
+    button{
+      border:0;
+      cursor:pointer;
+      font: inherit;
+      color: #081018;
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: linear-gradient(90deg, var(--a), var(--b), var(--c));
+      box-shadow: 0 16px 40px rgba(0,0,0,.35);
+      transition: transform .15s ease, filter .2s ease, box-shadow .2s ease;
+      font-weight: 650;
+      letter-spacing: .01em;
+    }
+    button:hover{ transform: translateY(-2px); filter: saturate(1.05) contrast(1.02); }
+    button:active{ transform: translateY(0px) scale(.99); }
 
-        .status-dot {
-            height: 8px;
-            width: 8px;
-            background-color: #22c55e;
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: 5px;
-        }
+    .ghost{
+      background: rgba(255,255,255,.06);
+      color: rgba(234,240,255,.92);
+      border: 1px solid rgba(255,255,255,.14);
+      box-shadow: none;
+    }
+    .ghost:hover{
+      background: rgba(255,255,255,.09);
+      border-color: rgba(255,255,255,.20);
+    }
 
-        /* Responsive */
-        @media (max-width: 768px) {
-            main { flex-direction: column; }
-            aside { width: 100%; height: auto; max-height: 200px; }
-            .proxy-container { display: none; } 
-            .theme-selector { right: 0; width: 100%; }
-        }
-    </style>
+    .hint{
+      margin: 10px 2px 0 2px;
+      color: rgba(234,240,255,.62);
+      font-size: 12.5px;
+      line-height: 1.5;
+    }
+
+    .status{
+      margin-top: 12px;
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+      padding: 12px 12px;
+      border-radius: 16px;
+      border: 1px dashed rgba(255,255,255,.18);
+      background: rgba(255,255,255,.03);
+      color: rgba(234,240,255,.78);
+      font-size: 12.5px;
+      line-height: 1.45;
+    }
+    .status strong{ color: rgba(234,240,255,.92); }
+
+    .side{
+      position:relative;
+      padding: clamp(16px, 2.6vw, 24px);
+      border-radius: var(--radius);
+      border: 1px solid rgba(255,255,255,.10);
+      background: linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.02));
+      box-shadow: 0 18px 50px rgba(0,0,0,.40);
+      overflow:hidden;
+    }
+    .side::before{
+      content:"";
+      position:absolute; inset:-2px;
+      background:
+        conic-gradient(from 180deg, rgba(158,247,210,.14), rgba(169,182,255,.14), rgba(255,211,138,.12), rgba(158,247,210,.14));
+      filter: blur(26px);
+      opacity:.55;
+      pointer-events:none;
+    }
+    .side > *{ position:relative; z-index:1; }
+
+    .side h3{
+      margin: 0 0 10px 0;
+      font-family: Fraunces, serif;
+      letter-spacing: -.02em;
+      font-size: 20px;
+      font-weight: 800;
+    }
+
+    .bullets{
+      margin: 0;
+      padding-left: 18px;
+      color: rgba(234,240,255,.75);
+      line-height: 1.65;
+      font-size: 13.5px;
+    }
+    .bullets li{ margin: 8px 0; }
+    .kbd{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 12px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      color: rgba(234,240,255,.86);
+      white-space:nowrap;
+    }
+
+    .mini{
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid rgba(255,255,255,.10);
+      display:grid;
+      gap: 10px;
+    }
+
+    .toggle{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding: 10px 12px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(10,14,20,.35);
+    }
+    .toggle .tlabel{
+      font-size: 13px;
+      color: rgba(234,240,255,.82);
+      line-height: 1.25;
+    }
+    .switch{
+      width: 46px; height: 28px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.06);
+      position:relative;
+      flex: 0 0 auto;
+      transition: background .2s ease, border-color .2s ease;
+    }
+    .switch::after{
+      content:"";
+      position:absolute;
+      top: 3px; left: 3px;
+      width: 22px; height: 22px;
+      border-radius: 999px;
+      background: rgba(234,240,255,.92);
+      box-shadow: 0 10px 20px rgba(0,0,0,.35);
+      transition: transform .2s ease, background .2s ease;
+    }
+    .switch[data-on="true"]{
+      background: rgba(98,246,181,.16);
+      border-color: rgba(98,246,181,.35);
+    }
+    .switch[data-on="true"]::after{
+      transform: translateX(18px);
+      background: rgba(98,246,181,.95);
+    }
+
+    footer{
+      padding: 18px clamp(18px, 5vw, 56px) 28px;
+      color: rgba(234,240,255,.55);
+      font-size: 12.5px;
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+      border-top: 1px solid rgba(255,255,255,.06);
+      background: linear-gradient(0deg, rgba(10,14,20,.55), rgba(10,14,20,0));
+      backdrop-filter: blur(10px);
+    }
+
+    .reveal{
+      opacity:0;
+      transform: translateY(10px);
+      animation: in .7s cubic-bezier(.2,.8,.2,1) forwards;
+    }
+    .d1{ animation-delay:.05s; }
+    .d2{ animation-delay:.14s; }
+    .d3{ animation-delay:.22s; }
+    .d4{ animation-delay:.30s; }
+    @keyframes in{
+      to{ opacity:1; transform: translateY(0); }
+    }
+
+    @media (max-width: 920px){
+      .layout{ grid-template-columns: 1fr; }
+      header{ position:relative; }
+      .brand{ min-width: unset; }
+      .meta{ justify-content:flex-start; }
+    }
+
+    @media (prefers-reduced-motion: reduce){
+      .reveal{ opacity:1; transform:none; animation:none; }
+      button{ transition:none; }
+      input[type="url"], input[type="text"]{ transition:none; }
+    }
+  </style>
 </head>
+
 <body>
-
-<header>
-    <div class="logo">LUMO HUB</div>
-    <div class="proxy-container">
-        <input type="url" id="proxy-url" placeholder="Enter website URL (e.g., https://example.com)" value="">
-        <button class="btn-go" onclick="loadProxy()">Go</button>
-        <button class="btn-clear" onclick="resetView()">Hub</button>
-        <button id="theme-btn" onclick="toggleThemeSelector()" style="margin-left: 10px;">🎨</button>
-    </div>
-</header>
-
-<!-- Theme Selector Dropdown -->
-<div id="theme-selector" class="theme-selector">
-    <div class="theme-title">Select Theme</div>
-    <div id="themes-container"></div>
-</div>
-
-<main>
-    <aside>
-        <div class="section-title">Popular Games</div>
-        <div class="game-item" onclick="launchGame('Minecraft Classic')">
-            <div class="game-icon">MC</div>
-            <span>Minecraft Classic</span>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <div class="mark" aria-hidden="true"></div>
+        <div>
+          <h1>about:blank Opener</h1>
+          <p>Launch a URL in a new <span class="kbd">about:blank</span> tab (browser rules apply).</p>
         </div>
-        <div class="game-item" onclick="launchGame('Agar.io')">
-            <div class="game-icon">AG</div>
-            <span>Agar.io</span>
-        </div>
-        <div class="game-item" onclick="launchGame('Slither.io')">
-            <div class="game-icon">SL</div>
-            <span>Slither.io</span>
-        </div>
-        
-        <div class="section-title">Tools</div>
-        <div class="game-item" onclick="alert('Settings coming soon!')">
-            <div class="game-icon">⚙️</div>
-            <span>Settings</span>
-        </div>
-    </aside>
+      </div>
+      <div class="meta">
+        <div class="chip"><span class="dot" aria-hidden="true"></span><span>Needs a user click</span></div>
+        <div class="chip">Pop-up blockers may stop it</div>
+      </div>
+    </header>
 
-    <div id="content-area">
-        <!-- Game Grid View -->
-        <div id="grid-view" class="game-grid">
-            <!-- Cards injected via JS -->
-        </div>
+    <main>
+      <section class="layout" aria-label="About blank opener">
+        <article class="hero reveal d1">
+          <div class="kicker"><span class="line" aria-hidden="true"></span><span>Utility</span></div>
+          <h2>Open links via <span>about:blank</span>.</h2>
+          <p>
+            Type a URL and click <strong>Open in about:blank</strong>. Your browser will open a new blank tab/window
+            and then navigate it to the target address.
+          </p>
 
-        <!-- Proxy View -->
-        <div id="proxy-view" class="proxy-frame-container">
-            <iframe id="proxy-frame" sandbox="allow-same-origin allow-scripts allow-popups allow-forms"></iframe>
-        </div>
-    </div>
-</main>
+          <div class="panel reveal d2">
+            <label for="url">URL to open</label>
+            <div class="row">
+              <input id="url" name="url" type="url" inputmode="url" autocomplete="off"
+                     placeholder="phantom.lol" />
+              <button id="openBtn" type="button">Open in about:blank</button>
+            </div>
 
-<footer>
-    <div><span class="status-dot"></span>System Online</div>
-    <div>Lumo Gaming Hub v1.0</div>
-</footer>
+            <div class="actions">
+              <button id="openSameBtn" class="ghost" type="button" title="Opens in the same tab (no popup needed)">
+                Open here instead
+              </button>
+              <button id="fillBtn" class="ghost" type="button">
+                Use example
+              </button>
+            </div>
 
-<script>
-    // --- Embedded Themes Data (from themes.json) ---
-    const themesData = [
-        {
-            "name": "Default",
-            "value": "default",
-            "css": {
-                "background": "linear-gradient(145deg, #010310, #080c17)",
-                "primary": "#01031d",
-                "secondary": "#0a0e1a",
-                "accent": "#3b82f6",
-                "accent-light": "#93c5fd",
-                "accent-glow": "rgba(59, 130, 246, 0.2)",
-                "border": "rgba(59, 130, 246, 0.3)",
-                "text": "#e0f2fe",
-                "text-muted": "#bae6fd",
-                "active-tab": "linear-gradient(145deg, #1e3a8a, var(--secondary))"
-            }
-        },
-        {
-            "name": "Shadow",
-            "value": "shadow",
-            "css": {
-                "background": "linear-gradient(145deg, #0b0013, #15001f)",
-                "primary": "#12001f",
-                "secondary": "#1a0a2b",
-                "accent": "#a855f7",
-                "accent-light": "#d8b4fe",
-                "accent-glow": "rgba(168, 85, 247, 0.2)",
-                "border": "rgba(168, 85, 247, 0.3)",
-                "text": "#f3e8ff",
-                "text-muted": "#e9d5ff",
-                "active-tab": "linear-gradient(145deg, #6b21a8, var(--secondary))"
-            }
-        },
-        {
-            "name": "Midnight City",
-            "value": "midnight",
-            "css": {
-                "background": "#0a0a0f",
-                "primary": "#111322",
-                "secondary": "#1a1c2b",
-                "accent": "#4f46e5",
-                "accent-light": "#818cf8",
-                "accent-glow": "rgba(99, 102, 241, 0.2)",
-                "border": "rgba(129, 140, 248, 0.25)",
-                "text": "#f1f5f9",
-                "text-muted": "#cbd5e1",
-                "active-tab": "linear-gradient(145deg, #4338ca, var(--secondary))"
-            }
-        },
-        {
-            "name": "Red Sunset",
-            "value": "redsunset",
-            "css": {
-                "background": "linear-gradient(145deg, #2b001b, #490000)",
-                "primary": "#2e020e",
-                "secondary": "#450202",
-                "accent": "#ef4444",
-                "accent-light": "#f87171",
-                "accent-glow": "rgba(239, 68, 68, 0.2)",
-                "border": "rgba(239, 68, 68, 0.3)",
-                "text": "#fef2f2",
-                "text-muted": "#fee2e2",
-                "active-tab": "linear-gradient(145deg, #ef4444, var(--secondary))"
-            }
-        },
-        {
-            "name": "Matrix",
-            "value": "matrix",
-            "css": {
-                "background": "linear-gradient(145deg, #000c05, #001a0f)",
-                "primary": "#001a0f",
-                "secondary": "#003b22",
-                "accent": "#39ff14",
-                "accent-light": "#66ff66",
-                "accent-glow": "rgba(57, 255, 20, 0.25)",
-                "border": "rgba(57, 255, 20, 0.3)",
-                "text": "#eaffea",
-                "text-muted": "#c6fdd1",
-                "active-tab": "linear-gradient(145deg, #39ff14, var(--secondary))"
-            }
-        },
-        {
-            "name": "Opera GX",
-            "value": "operagx",
-            "css": {
-                "background": "linear-gradient(145deg, #0d0606, #040000)",
-                "primary": "#090505",
-                "secondary": "#000",
-                "accent": "#ff0050",
-                "accent-light": "#ff4f87",
-                "accent-glow": "rgba(255, 0, 80, 0.15)",
-                "border": "rgba(255, 0, 80, 0.25)",
-                "text": "#f0f0f5",
-                "text-muted": "#a0a0b2",
-                "active-tab": "linear-gradient(145deg, #ff0050, #1a1b22)"
-            }
-        },
-        {
-            "name": "Metallic Brass",
-            "value": "golden",
-            "css": {
-                "background": "linear-gradient(145deg, #1a1200, #2d1f00)",
-                "primary": "#2d1f00",
-                "secondary": "#3d2f10",
-                "accent": "#ffd700",
-                "accent-light": "#ffed4e",
-                "accent-glow": "rgba(255, 215, 0, 0.2)",
-                "border": "rgba(255, 215, 0, 0.3)",
-                "text": "#fffacd",
-                "text-muted": "#f0e68c",
-                "active-tab": "linear-gradient(145deg, #b8860b, var(--secondary))"
-            }
-        },
-        {
-            "name": "Kay's Pink",
-            "value": "kayspink",
-            "css": {
-                "background": "linear-gradient(145deg, #0a0012, #17001c)",
-                "primary": "#120016",
-                "secondary": "#1a001f",
-                "accent": "#ff0090",
-                "accent-light": "#ff7bc6",
-                "accent-glow": "rgba(255, 0, 144, 0.2)",
-                "border": "rgba(255, 0, 144, 0.3)",
-                "text": "#ffe4f3",
-                "text-muted": "#ffb8dc",
-                "active-tab": "linear-gradient(145deg, #8a005e, var(--secondary))"
-            }
-        }
-    ];
+            <p class="hint">
+              Tip: include <span class="kbd">https://</span>. Some sites block being opened in certain contexts.
+            </p>
 
-    // --- Mock Game Data ---
-    const games = [
-        { id: 1, title: "Minecraft Classic", desc: "Build and explore.", url: "https://classic.minecraft.net" },
-        { id: 2, title: "Agar.io", desc: "Eat cells smaller than you.", url: "https://agar.io" },
-        { id: 3, title: "Slither.io", desc: "Grow your snake.", url: "https://slither.io" },
-        { id: 4, title: "2048", desc: "Combine numbers to win.", url: "https://play2048.co" },
-        { id: 5, title: "Hextris", desc: "Fast-paced puzzle game.", url: "https://hextris.io" },
-        { id: 6, title: "Pacman", desc: "Classic arcade fun.", url: "https://pacman-e6a.pages.dev" }
-    ];
+            <div id="status" class="status" role="status" aria-live="polite">
+              <div>
+                <strong>Status:</strong>
+                <span id="statusText">Ready.</span>
+              </div>
+            </div>
+          </div>
+        </article>
 
-    const gridView = document.getElementById('grid-view');
-    const proxyView = document.getElementById('proxy-view');
-    const proxyFrame = document.getElementById('proxy-frame');
-    const urlInput = document.getElementById('proxy-url');
-    const themeBtn = document.getElementById('theme-btn');
-    const themeSelector = document.getElementById('theme-selector');
-    const themesContainer = document.getElementById('themes-container');
+        <aside class="side reveal d3" aria-label="Notes">
+          <h3>Notes & limits</h3>
+          <ul class="bullets">
+            <li>This only works reliably when triggered by a direct user action (click/tap).</li>
+            <li>Pop-up blockers may prevent <span class="kbd">window.open</span>. If blocked, use “Open here instead”.</li>
+            <li>Some URLs may refuse to load or behave differently due to site security policies.</li>
+            <li>We don’t embed external pages in an iframe here—this just navigates a new blank tab.</li>
+          </ul>
 
-    // --- Theme Logic (Adapted from script.js) ---
-    function applyTheme(theme) {
-        const root = document.documentElement;
-        const css = theme.css;
-        
-        root.style.setProperty('--bg-color', css.background);
-        root.style.setProperty('--card-bg', css.secondary); // Using secondary for cards
-        root.style.setProperty('--text-main', css.text);
-        root.style.setProperty('--text-muted', css['text-muted']);
-        root.style.setProperty('--accent', css.accent);
-        root.style.setProperty('--accent-light', css['accent-light']);
-        root.style.setProperty('--accent-glow', css['accent-glow']);
-        root.style.setProperty('--border', css.border);
-        root.style.setProperty('--primary', css.primary);
-        root.style.setProperty('--secondary', css.secondary);
-        root.style.setProperty('--active-tab', css['active-tab']);
+          <div class="mini">
+            <div class="toggle">
+              <div class="tlabel">
+                Auto-prepend <span class="kbd">https://</span> if missing
+              </div>
+              <button id="httpsToggle" class="switch" type="button" data-on="true" aria-pressed="true" aria-label="Toggle auto https"></button>
+            </div>
+
+            <div class="toggle">
+              <div class="tlabel">
+                Use <span class="kbd">noopener</span> (safer)
+              </div>
+              <button id="noopenerToggle" class="switch" type="button" data-on="true" aria-pressed="true" aria-label="Toggle noopener"></button>
+            </div>
+          </div>
+        </aside>
+      </section>
+    </main>
+
+    <footer>
+      <div>Built as a single-file utility page (HTML/CSS/JS).</div>
+      <div>Accessibility: semantic layout, focusable controls, live status messages.</div>
+    </footer>
+  </div>
+
+  <script>
+    const $ = (s) => document.querySelector(s);
+
+    const urlInput = $("#url");
+    const openBtn = $("#openBtn");
+    const openSameBtn = $("#openSameBtn");
+    const fillBtn = $("#fillBtn");
+    const statusText = $("#statusText");
+
+    const httpsToggle = $("#httpsToggle");
+    const noopenerToggle = $("#noopenerToggle");
+
+    function setStatus(msg, kind = "info") {
+      statusText.textContent = msg;
+
+      const status = $("#status");
+      status.style.borderColor =
+        kind === "ok" ? "rgba(98,246,181,.35)" :
+        kind === "bad" ? "rgba(255,107,122,.35)" :
+        "rgba(255,255,255,.18)";
+
+      status.style.background =
+        kind === "ok" ? "rgba(98,246,181,.08)" :
+        kind === "bad" ? "rgba(255,107,122,.08)" :
+        "rgba(255,255,255,.03)";
     }
 
-    function toggleThemeSelector() {
-        themeSelector.classList.toggle('active');
+    function normalizeUrl(raw) {
+      const trimmed = (raw || "").trim();
+      if (!trimmed) return "";
+
+      const autoHttps = httpsToggle.dataset.on === "true";
+      if (autoHttps && !/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(trimmed)) {
+        return "https://" + trimmed;
+      }
+      return trimmed;
     }
 
-    // Close theme selector when clicking outside
-    document.addEventListener('click', (e) => {
-        if (!themeSelector.contains(e.target) && e.target !== themeBtn) {
-            themeSelector.classList.remove('active');
-        }
+    function openInAboutBlank(url) {
+      const useNoopener = noopenerToggle.dataset.on === "true";
+      const features = useNoopener ? "noopener,noreferrer" : "";
+
+      const w = window.open("about:blank", "_blank", features);
+
+      if (!w) {
+        setStatus("Popup blocked. Try “Open here instead”, or allow popups for this site.", "bad");
+        return;
+      }
+
+      try {
+        // Some browsers may briefly show about:blank; then we navigate.
+        w.location.href = url;
+        setStatus("Opened in a new about:blank tab.", "ok");
+      } catch (e) {
+        setStatus("Opened a new tab, but navigation was blocked by the browser.", "bad");
+      }
+    }
+
+    function openHere(url) {
+      // No popup: navigates current tab.
+      window.location.href = url;
+    }
+
+    function toggleSwitch(el) {
+      const on = el.dataset.on === "true";
+      el.dataset.on = String(!on);
+      el.setAttribute("aria-pressed", String(!on));
+    }
+
+    openBtn.addEventListener("click", () => {
+      const url = normalizeUrl(urlInput.value);
+      if (!url) return setStatus("Enter a URL first.", "bad");
+      setStatus("Opening…");
+      openInAboutBlank(url);
     });
 
-    function initThemes() {
-        themesContainer.innerHTML = '';
-        themesData.forEach(theme => {
-            const themeDiv = document.createElement('div');
-            themeDiv.classList.add('theme-item');
-            themeDiv.onclick = () => {
-                applyTheme(theme);
-                themeSelector.classList.remove('active');
-            };
+    openSameBtn.addEventListener("click", () => {
+      const url = normalizeUrl(urlInput.value);
+      if (!url) return setStatus("Enter a URL first.", "bad");
+      setStatus("Navigating in this tab…");
+      openHere(url);
+    });
 
-            // Color Strip
-            const colorDiv = document.createElement('div');
-            colorDiv.classList.add('theme-color-strip');
-            colorDiv.style.background = `linear-gradient(135deg, ${theme.css['primary']}, ${theme.css['secondary']}, ${theme.css['accent']}, ${theme.css['accent-light']})`;
-            colorDiv.style.borderColor = theme.css['accent-light'];
+    fillBtn.addEventListener("click", () => {
+      urlInput.value = "https://example.com";
+      urlInput.focus();
+      setStatus("Example filled. Click “Open in about:blank”.", "info");
+    });
 
-            // Name
-            const nameSpan = document.createElement('span');
-            nameSpan.classList.add('theme-name');
-            nameSpan.textContent = theme.name;
+    httpsToggle.addEventListener("click", () => toggleSwitch(httpsToggle));
+    noopenerToggle.addEventListener("click", () => toggleSwitch(noopenerToggle));
 
-            themeDiv.appendChild(colorDiv);
-            themeDiv.appendChild(nameSpan);
-            themesContainer.appendChild(themeDiv);
-        });
-    }
+    // Enter key to open (still counts as user action)
+    urlInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") openBtn.click();
+    });
 
-    // --- Game & Proxy Logic ---
-    function initGrid() {
-        gridView.innerHTML = '';
-        games.forEach(game => {
-            const card = document.createElement('div');
-            card.className = 'game-card';
-            card.onclick = () => launchGame(game.title);
-            card.innerHTML = `
-                <div class="card-img">${game.title.substring(0,2)}</div>
-                <div class="card-body">
-                    <div class="card-title">${game.title}</div>
-                    <div class="card-desc">${game.desc}</div>
-                </div>
-            `;
-            gridView.appendChild(card);
-        });
-    }
+    // Intersection reveal for the aside/panel if needed
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) entry.target.classList.add("seen");
+      });
+    }, { threshold: 0.12 });
 
-    function loadProxy() {
-        let url = urlInput.value.trim();
-        if (!url) {
-            alert("Please enter a URL");
-            return;
-        }
-        if (!url.startsWith('http')) {
-            url = 'https://' + url;
-        }
+    // (No extra CSS needed; base animation already runs on load)
+    document.querySelectorAll(".reveal").forEach(el => observer.observe(el));
 
-        // NOTE: For a real proxy, prepend your backend URL here
-        // const finalUrl = `http://127.0.0.1:8080/?url=${encodeURIComponent(url)}`;
-        const finalUrl = url; 
-
-        gridView.style.display = 'none';
-        proxyView.style.display = 'block';
-        proxyFrame.src = finalUrl;
-        
-        document.querySelector('.status-dot').style.backgroundColor = '#3b82f6';
-    }
-
-    function launchGame(gameTitle) {
-        const game = games.find(g => g.title === gameTitle);
-        if (game) {
-            urlInput.value = game.url;
-            loadProxy();
-        }
-    }
-
-    function resetView() {
-        proxyFrame.src = '';
-        proxyView.style.display = 'none';
-        gridView.style.display = 'grid';
-        urlInput.value = '';
-        document.querySelector('.status-dot').style.backgroundColor = '#22c55e';
-    }
-
-    // Initialize
-    initGrid();
-    initThemes();
-    applyTheme(themesData[0]); // Apply default theme
-</script>
-
+    // Initial focus
+    window.addEventListener("load", () => {
+      urlInput.focus({ preventScroll: true });
+      setStatus("Ready. Popups must be allowed (or use “Open here instead”).", "info");
+    });
+  </script>
 </body>
 </html>
