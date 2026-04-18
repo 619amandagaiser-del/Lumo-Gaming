@@ -3,455 +3,588 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gamer's Sanctuary Hub</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <title>Lumo Gaming Hub & Proxy</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400;600&display=swap');
-
         :root {
-            --accent: #8b5cf6;
-            --accent-hover: #7c3aed;
-            --bg-dark: #0f172a;
-            --card-bg: #1e293b;
+            /* Default Theme Variables (will be overridden by JS) */
+            --bg-color: linear-gradient(145deg, #010310, #080c17);
+            --card-bg: #0a0e1a;
+            --text-main: #e0f2fe;
+            --text-muted: #bae6fd;
+            --accent: #3b82f6;
+            --accent-light: #93c5fd;
+            --accent-glow: rgba(59, 130, 246, 0.2);
+            --border: rgba(59, 130, 246, 0.3);
+            --primary: #01031d;
+            --secondary: #0a0e1a;
+            --active-tab: linear-gradient(145deg, #1e3a8a, var(--secondary));
+            --hover-danger: #f87171;
         }
 
-        body {
-            background-color: var(--bg-dark);
-            color: #f8fafc;
-            font-family: 'Inter', sans-serif;
-            margin: 0;
-            overflow-x: hidden;
-        }
-
-        .font-orbitron { font-family: 'Orbitron', sans-serif; }
-
-        .glass-panel {
-            background: rgba(30, 41, 59, 0.7);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .game-card:hover .play-overlay {
-            opacity: 1;
-        }
-
-        .neon-glow {
-            box-shadow: 0 0 15px rgba(139, 92, 246, 0.4);
-        }
-
-        /* AI Assistant Styles */
-        #aiAssistant {
-            position: fixed;
-            bottom: 2rem;
-            right: 2rem;
-            z-index: 100;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .ai-collapsed {
-            width: 64px;
-            height: 64px;
-            border-radius: 50%;
-        }
-
-        .ai-expanded {
-            width: 350px;
-            height: 500px;
-            border-radius: 1.5rem;
-        }
-
-        .chat-bubbles::-webkit-scrollbar { width: 4px; }
-        .chat-bubbles::-webkit-scrollbar-thumb { background: #475569; border-radius: 10px; }
-
-        .typing-dot {
-            width: 6px;
-            height: 6px;
-            background: #8b5cf6;
-            border-radius: 50%;
-            animation: typing 1s infinite ease-in-out;
-        }
-        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
-        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
-
-        @keyframes typing {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-4px); }
-        }
-
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: var(--bg-dark); }
-        ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 10px; }
-
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         
-        .nav-link.active {
-            color: white;
-            border-bottom: 2px solid var(--accent);
+        body {
+            background: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            transition: background 0.5s ease, color 0.5s ease;
         }
 
-        .modal {
-            display: none;
-            position: fixed;
+        /* Header & Proxy Bar */
+        header {
+            background-color: var(--card-bg);
+            padding: 1rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            position: sticky;
             top: 0;
-            left: 0;
+            z-index: 100;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .logo { font-size: 1.5rem; font-weight: bold; color: var(--accent); letter-spacing: 1px; }
+        
+        .proxy-container {
+            flex-grow: 1;
+            margin: 0 2rem;
+            display: flex;
+            gap: 10px;
+        }
+
+        input[type="url"] {
+            width: 100%;
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--primary);
+            color: var(--text-main);
+            outline: none;
+            transition: border-color 0.2s, background 0.2s;
+        }
+
+        input[type="url"]:focus { border-color: var(--accent); }
+
+        button {
+            padding: 10px 20px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            background: var(--secondary);
+            color: var(--text-main);
+            transition: all 0.2s;
+        }
+
+        .btn-go { background-color: var(--accent); color: white; border: none; }
+        .btn-go:hover { background-color: var(--accent-light); color: var(--primary); }
+        
+        .btn-clear { background-color: var(--secondary); }
+        .btn-clear:hover { background-color: var(--border); }
+
+        /* Theme Selector Styles */
+        .theme-selector {
+            position: absolute;
+            top: 60px;
+            right: 2rem;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1rem;
+            width: 250px;
+            max-height: 400px;
+            overflow-y: auto;
+            display: none;
+            box-shadow: 0 12px 24px var(--accent-glow);
+            z-index: 200;
+        }
+
+        .theme-selector.active { display: block; }
+
+        .theme-title {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+        }
+
+        .theme-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 5px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .theme-item:hover {
+            background: var(--active-tab);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+
+        .theme-color-strip {
+            width: 30px;
+            height: 30px;
+            border-radius: 6px;
+            margin-right: 10px;
+            border: 1px solid var(--border);
+        }
+
+        .theme-name { font-size: 0.9rem; font-weight: 500; }
+
+        /* Main Layout */
+        main {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Sidebar (Game List) */
+        aside {
+            width: 250px;
+            background-color: var(--card-bg);
+            padding: 1rem;
+            overflow-y: auto;
+            border-right: 1px solid var(--border);
+        }
+
+        .section-title {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+            margin-top: 1.5rem;
+        }
+        .section-title:first-child { margin-top: 0; }
+
+        .game-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-bottom: 5px;
+        }
+
+        .game-item:hover { background-color: var(--secondary); }
+        .game-icon { width: 30px; height: 30px; background: var(--accent); border-radius: 6px; margin-right: 10px; display: flex; align-items: center; justify-content: center; font-size: 12px; color: var(--primary); font-weight: bold;}
+
+        /* Content Area */
+        #content-area {
+            flex: 1;
+            padding: 2rem;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        /* Game Grid View */
+        .game-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .game-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: transform 0.2s, border-color 0.2s;
+            cursor: pointer;
+            border: 1px solid var(--border);
+        }
+
+        .game-card:hover { transform: translateY(-5px); border-color: var(--accent); }
+
+        .card-img {
+            height: 120px;
+            background: linear-gradient(45deg, var(--secondary), var(--primary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            font-size: 2rem;
+            font-weight: bold;
+        }
+
+        .card-body { padding: 1rem; }
+        .card-title { font-weight: bold; margin-bottom: 0.5rem; color: var(--text-main); }
+        .card-desc { font-size: 0.85rem; color: var(--text-muted); }
+
+        /* Proxy View (Iframe) */
+        .proxy-frame-container {
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.9);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            display: none; /* Hidden by default */
         }
-        .active-modal { display: flex; }
+
+        iframe { width: 100%; height: 100%; border: none; }
+
+        /* Status Bar */
+        footer {
+            padding: 0.5rem 2rem;
+            background: var(--primary);
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            display: flex;
+            justify-content: space-between;
+            border-top: 1px solid var(--border);
+        }
+
+        .status-dot {
+            height: 8px;
+            width: 8px;
+            background-color: #22c55e;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            main { flex-direction: column; }
+            aside { width: 100%; height: auto; max-height: 200px; }
+            .proxy-container { display: none; } 
+            .theme-selector { right: 0; width: 100%; }
+        }
     </style>
 </head>
-<body class="min-h-screen">
+<body>
 
-    <!-- Navigation -->
-    <nav class="fixed top-0 w-full z-50 glass-panel px-6 py-4 flex justify-between items-center">
-        <div class="flex items-center space-x-2">
-            <div class="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center neon-glow">
-                <i class="fas fa-bolt text-white text-xl"></i>
-            </div>
-            <span class="text-2xl font-orbitron font-bold tracking-tighter uppercase">Sanctuary</span>
+<header>
+    <div class="logo">LUMO HUB</div>
+    <div class="proxy-container">
+        <input type="url" id="proxy-url" placeholder="Enter website URL (e.g., https://example.com)" value="">
+        <button class="btn-go" onclick="loadProxy()">Go</button>
+        <button class="btn-clear" onclick="resetView()">Hub</button>
+        <button id="theme-btn" onclick="toggleThemeSelector()" style="margin-left: 10px;">🎨</button>
+    </div>
+</header>
+
+<!-- Theme Selector Dropdown -->
+<div id="theme-selector" class="theme-selector">
+    <div class="theme-title">Select Theme</div>
+    <div id="themes-container"></div>
+</div>
+
+<main>
+    <aside>
+        <div class="section-title">Popular Games</div>
+        <div class="game-item" onclick="launchGame('Minecraft Classic')">
+            <div class="game-icon">MC</div>
+            <span>Minecraft Classic</span>
+        </div>
+        <div class="game-item" onclick="launchGame('Agar.io')">
+            <div class="game-icon">AG</div>
+            <span>Agar.io</span>
+        </div>
+        <div class="game-item" onclick="launchGame('Slither.io')">
+            <div class="game-icon">SL</div>
+            <span>Slither.io</span>
         </div>
         
-        <div class="hidden md:flex flex-1 max-w-md mx-8">
-            <div class="relative w-full search-container">
-                <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"></i>
-                <input type="text" placeholder="Find games or entertainment..." 
-                    class="w-full bg-slate-800/50 border border-slate-700 rounded-full py-2 pl-12 pr-4 text-sm focus:outline-none focus:border-indigo-500 transition-all">
-            </div>
+        <div class="section-title">Tools</div>
+        <div class="game-item" onclick="alert('Settings coming soon!')">
+            <div class="game-icon">⚙️</div>
+            <span>Settings</span>
+        </div>
+    </aside>
+
+    <div id="content-area">
+        <!-- Game Grid View -->
+        <div id="grid-view" class="game-grid">
+            <!-- Cards injected via JS -->
         </div>
 
-        <div class="flex items-center space-x-6">
-            <div class="hidden lg:flex space-x-8 text-[11px] font-bold uppercase tracking-widest text-gray-400">
-                <button onclick="switchTab('library')" class="nav-link active py-2 transition hover:text-white">Library</button>
-                <button onclick="switchTab('tv')" class="nav-link py-2 transition hover:text-white">Sanctuary TV</button>
-                <button class="nav-link py-2 transition hover:text-white">Social</button>
-            </div>
-            <div class="flex items-center space-x-4 border-l border-slate-700 pl-6">
-                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="Avatar" class="w-9 h-9 rounded-full border-2 border-indigo-500 hover:scale-110 transition cursor-pointer">
-            </div>
+        <!-- Proxy View -->
+        <div id="proxy-view" class="proxy-frame-container">
+            <iframe id="proxy-frame" sandbox="allow-same-origin allow-scripts allow-popups allow-forms"></iframe>
         </div>
-    </nav>
+    </div>
+</main>
 
-    <!-- Main Content -->
-    <main class="pt-24 pb-12 px-6 lg:px-12 max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-8">
+<footer>
+    <div><span class="status-dot"></span>System Online</div>
+    <div>Lumo Gaming Hub v1.0</div>
+</footer>
+
+<script>
+    // --- Embedded Themes Data (from themes.json) ---
+    const themesData = [
+        {
+            "name": "Default",
+            "value": "default",
+            "css": {
+                "background": "linear-gradient(145deg, #010310, #080c17)",
+                "primary": "#01031d",
+                "secondary": "#0a0e1a",
+                "accent": "#3b82f6",
+                "accent-light": "#93c5fd",
+                "accent-glow": "rgba(59, 130, 246, 0.2)",
+                "border": "rgba(59, 130, 246, 0.3)",
+                "text": "#e0f2fe",
+                "text-muted": "#bae6fd",
+                "active-tab": "linear-gradient(145deg, #1e3a8a, var(--secondary))"
+            }
+        },
+        {
+            "name": "Shadow",
+            "value": "shadow",
+            "css": {
+                "background": "linear-gradient(145deg, #0b0013, #15001f)",
+                "primary": "#12001f",
+                "secondary": "#1a0a2b",
+                "accent": "#a855f7",
+                "accent-light": "#d8b4fe",
+                "accent-glow": "rgba(168, 85, 247, 0.2)",
+                "border": "rgba(168, 85, 247, 0.3)",
+                "text": "#f3e8ff",
+                "text-muted": "#e9d5ff",
+                "active-tab": "linear-gradient(145deg, #6b21a8, var(--secondary))"
+            }
+        },
+        {
+            "name": "Midnight City",
+            "value": "midnight",
+            "css": {
+                "background": "#0a0a0f",
+                "primary": "#111322",
+                "secondary": "#1a1c2b",
+                "accent": "#4f46e5",
+                "accent-light": "#818cf8",
+                "accent-glow": "rgba(99, 102, 241, 0.2)",
+                "border": "rgba(129, 140, 248, 0.25)",
+                "text": "#f1f5f9",
+                "text-muted": "#cbd5e1",
+                "active-tab": "linear-gradient(145deg, #4338ca, var(--secondary))"
+            }
+        },
+        {
+            "name": "Red Sunset",
+            "value": "redsunset",
+            "css": {
+                "background": "linear-gradient(145deg, #2b001b, #490000)",
+                "primary": "#2e020e",
+                "secondary": "#450202",
+                "accent": "#ef4444",
+                "accent-light": "#f87171",
+                "accent-glow": "rgba(239, 68, 68, 0.2)",
+                "border": "rgba(239, 68, 68, 0.3)",
+                "text": "#fef2f2",
+                "text-muted": "#fee2e2",
+                "active-tab": "linear-gradient(145deg, #ef4444, var(--secondary))"
+            }
+        },
+        {
+            "name": "Matrix",
+            "value": "matrix",
+            "css": {
+                "background": "linear-gradient(145deg, #000c05, #001a0f)",
+                "primary": "#001a0f",
+                "secondary": "#003b22",
+                "accent": "#39ff14",
+                "accent-light": "#66ff66",
+                "accent-glow": "rgba(57, 255, 20, 0.25)",
+                "border": "rgba(57, 255, 20, 0.3)",
+                "text": "#eaffea",
+                "text-muted": "#c6fdd1",
+                "active-tab": "linear-gradient(145deg, #39ff14, var(--secondary))"
+            }
+        },
+        {
+            "name": "Opera GX",
+            "value": "operagx",
+            "css": {
+                "background": "linear-gradient(145deg, #0d0606, #040000)",
+                "primary": "#090505",
+                "secondary": "#000",
+                "accent": "#ff0050",
+                "accent-light": "#ff4f87",
+                "accent-glow": "rgba(255, 0, 80, 0.15)",
+                "border": "rgba(255, 0, 80, 0.25)",
+                "text": "#f0f0f5",
+                "text-muted": "#a0a0b2",
+                "active-tab": "linear-gradient(145deg, #ff0050, #1a1b22)"
+            }
+        },
+        {
+            "name": "Metallic Brass",
+            "value": "golden",
+            "css": {
+                "background": "linear-gradient(145deg, #1a1200, #2d1f00)",
+                "primary": "#2d1f00",
+                "secondary": "#3d2f10",
+                "accent": "#ffd700",
+                "accent-light": "#ffed4e",
+                "accent-glow": "rgba(255, 215, 0, 0.2)",
+                "border": "rgba(255, 215, 0, 0.3)",
+                "text": "#fffacd",
+                "text-muted": "#f0e68c",
+                "active-tab": "linear-gradient(145deg, #b8860b, var(--secondary))"
+            }
+        },
+        {
+            "name": "Kay's Pink",
+            "value": "kayspink",
+            "css": {
+                "background": "linear-gradient(145deg, #0a0012, #17001c)",
+                "primary": "#120016",
+                "secondary": "#1a001f",
+                "accent": "#ff0090",
+                "accent-light": "#ff7bc6",
+                "accent-glow": "rgba(255, 0, 144, 0.2)",
+                "border": "rgba(255, 0, 144, 0.3)",
+                "text": "#ffe4f3",
+                "text-muted": "#ffb8dc",
+                "active-tab": "linear-gradient(145deg, #8a005e, var(--secondary))"
+            }
+        }
+    ];
+
+    // --- Mock Game Data ---
+    const games = [
+        { id: 1, title: "Minecraft Classic", desc: "Build and explore.", url: "https://classic.minecraft.net" },
+        { id: 2, title: "Agar.io", desc: "Eat cells smaller than you.", url: "https://agar.io" },
+        { id: 3, title: "Slither.io", desc: "Grow your snake.", url: "https://slither.io" },
+        { id: 4, title: "2048", desc: "Combine numbers to win.", url: "https://play2048.co" },
+        { id: 5, title: "Hextris", desc: "Fast-paced puzzle game.", url: "https://hextris.io" },
+        { id: 6, title: "Pacman", desc: "Classic arcade fun.", url: "https://pacman-e6a.pages.dev" }
+    ];
+
+    const gridView = document.getElementById('grid-view');
+    const proxyView = document.getElementById('proxy-view');
+    const proxyFrame = document.getElementById('proxy-frame');
+    const urlInput = document.getElementById('proxy-url');
+    const themeBtn = document.getElementById('theme-btn');
+    const themeSelector = document.getElementById('theme-selector');
+    const themesContainer = document.getElementById('themes-container');
+
+    // --- Theme Logic (Adapted from script.js) ---
+    function applyTheme(theme) {
+        const root = document.documentElement;
+        const css = theme.css;
         
-        <!-- Left Sidebar -->
-        <aside class="lg:col-span-1 space-y-6">
-            <div class="glass-panel rounded-2xl p-6">
-                <h3 class="text-gray-400 text-[10px] font-bold uppercase mb-4 tracking-[0.2em]">Categories</h3>
-                <ul class="space-y-3">
-                    <li class="flex items-center justify-between text-indigo-400 cursor-pointer group">
-                        <div class="flex items-center space-x-3">
-                            <i class="fas fa-fire-alt text-sm"></i>
-                            <span class="font-semibold text-sm">Action</span>
-                        </div>
-                        <span class="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-gray-400">12</span>
-                    </li>
-                    <li class="flex items-center justify-between text-gray-400 hover:text-white cursor-pointer transition text-sm">
-                        <div class="flex items-center space-x-3">
-                            <i class="fas fa-crosshairs"></i>
-                            <span>Ragdoll Fun</span>
-                        </div>
-                    </li>
-                </ul>
-            </div>
+        root.style.setProperty('--bg-color', css.background);
+        root.style.setProperty('--card-bg', css.secondary); // Using secondary for cards
+        root.style.setProperty('--text-main', css.text);
+        root.style.setProperty('--text-muted', css['text-muted']);
+        root.style.setProperty('--accent', css.accent);
+        root.style.setProperty('--accent-light', css['accent-light']);
+        root.style.setProperty('--accent-glow', css['accent-glow']);
+        root.style.setProperty('--border', css.border);
+        root.style.setProperty('--primary', css.primary);
+        root.style.setProperty('--secondary', css.secondary);
+        root.style.setProperty('--active-tab', css['active-tab']);
+    }
 
-            <div class="glass-panel rounded-2xl p-6">
-                <h3 class="text-gray-400 text-[10px] font-bold uppercase mb-4 tracking-[0.2em]">Friends Activity</h3>
-                <div class="space-y-4">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center space-x-3">
-                            <div class="relative">
-                                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Luna" class="w-8 h-8 rounded-full bg-slate-700">
-                                <span class="absolute bottom-0 right-0 w-2 h-2 bg-green-500 rounded-full border border-slate-900 shadow-sm"></span>
-                            </div>
-                            <div>
-                                <p class="text-xs font-bold">Luna_Void</p>
-                                <p class="text-[10px] text-indigo-400">Watching Sanctuary TV</p>
-                            </div>
-                        </div>
-                    </div>
+    function toggleThemeSelector() {
+        themeSelector.classList.toggle('active');
+    }
+
+    // Close theme selector when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!themeSelector.contains(e.target) && e.target !== themeBtn) {
+            themeSelector.classList.remove('active');
+        }
+    });
+
+    function initThemes() {
+        themesContainer.innerHTML = '';
+        themesData.forEach(theme => {
+            const themeDiv = document.createElement('div');
+            themeDiv.classList.add('theme-item');
+            themeDiv.onclick = () => {
+                applyTheme(theme);
+                themeSelector.classList.remove('active');
+            };
+
+            // Color Strip
+            const colorDiv = document.createElement('div');
+            colorDiv.classList.add('theme-color-strip');
+            colorDiv.style.background = `linear-gradient(135deg, ${theme.css['primary']}, ${theme.css['secondary']}, ${theme.css['accent']}, ${theme.css['accent-light']})`;
+            colorDiv.style.borderColor = theme.css['accent-light'];
+
+            // Name
+            const nameSpan = document.createElement('span');
+            nameSpan.classList.add('theme-name');
+            nameSpan.textContent = theme.name;
+
+            themeDiv.appendChild(colorDiv);
+            themeDiv.appendChild(nameSpan);
+            themesContainer.appendChild(themeDiv);
+        });
+    }
+
+    // --- Game & Proxy Logic ---
+    function initGrid() {
+        gridView.innerHTML = '';
+        games.forEach(game => {
+            const card = document.createElement('div');
+            card.className = 'game-card';
+            card.onclick = () => launchGame(game.title);
+            card.innerHTML = `
+                <div class="card-img">${game.title.substring(0,2)}</div>
+                <div class="card-body">
+                    <div class="card-title">${game.title}</div>
+                    <div class="card-desc">${game.desc}</div>
                 </div>
-            </div>
-        </aside>
+            `;
+            gridView.appendChild(card);
+        });
+    }
 
-        <!-- Main Feed Area -->
-        <div class="lg:col-span-3">
-            
-            <!-- Tab: Library -->
-            <section id="library" class="tab-content active space-y-8">
-                <!-- Featured Hero -->
-                <div class="relative h-64 rounded-3xl overflow-hidden group shadow-2xl">
-                    <img src="https://images.unsplash.com/photo-1614027164847-1b2809eb1895?auto=format&fit=crop&q=80&w=1200" class="w-full h-full object-cover transition duration-700 group-hover:scale-105" alt="Featured">
-                    <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/10 to-transparent"></div>
-                    <div class="absolute bottom-8 left-8">
-                        <span class="bg-indigo-600 px-2 py-0.5 rounded text-[10px] font-bold uppercase mb-2 inline-block">New Entry</span>
-                        <h2 class="text-4xl font-orbitron font-bold">RAGDOLL ARCHERS</h2>
-                        <p class="text-gray-300 mt-2 max-w-md text-sm">Master the physics of archery in this hilarious ragdoll combat simulator.</p>
-                        <button onclick="launchGame('Ragdoll Archers')" class="mt-4 bg-white text-black px-8 py-2.5 rounded-xl font-bold hover:bg-indigo-500 hover:text-white transition text-sm">LAUNCH GAME</button>
-                    </div>
-                </div>
-
-                <!-- Games Grid -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <div class="game-card group relative bg-slate-800 rounded-2xl overflow-hidden border border-transparent hover:border-indigo-500/50 transition duration-300 shadow-xl">
-                        <div class="h-40 relative">
-                            <img src="https://images.unsplash.com/photo-1551103782-8ab07afd45c1?auto=format&fit=crop&q=80&w=600" class="w-full h-full object-cover">
-                            <div class="play-overlay absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 transition duration-300">
-                                <button onclick="launchGame('Ragdoll Hit')" class="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center text-sm shadow-lg hover:scale-110 transition">
-                                    <i class="fas fa-play ml-1"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="p-4">
-                            <h4 class="font-bold text-sm">Ragdoll Hit</h4>
-                            <p class="text-[10px] text-gray-500">Action • Ragdoll Physics</p>
-                        </div>
-                    </div>
-
-                    <div class="game-card group relative bg-slate-800 rounded-2xl overflow-hidden border border-transparent hover:border-pink-500/50 transition duration-300 shadow-xl">
-                        <div class="h-40 relative">
-                            <img src="https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=600" class="w-full h-full object-cover">
-                            <div class="play-overlay absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 transition duration-300">
-                                <button onclick="launchGame('Stickman Hook')" class="w-10 h-10 bg-pink-600 rounded-full flex items-center justify-center text-sm shadow-lg hover:scale-110 transition">
-                                    <i class="fas fa-play ml-1"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="p-4">
-                            <h4 class="font-bold text-sm">Stickman Hook</h4>
-                            <p class="text-[10px] text-gray-500">Arcade • Physics Swinging</p>
-                        </div>
-                    </div>
-
-                    <div class="game-card group relative bg-slate-800 rounded-2xl overflow-hidden border border-transparent hover:border-orange-500/50 transition duration-300 shadow-xl">
-                        <div class="h-40 relative">
-                            <img src="https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&q=80&w=600" class="w-full h-full object-cover">
-                            <div class="play-overlay absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 transition duration-300">
-                                <button onclick="launchGame('Moto X3M')" class="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center text-sm shadow-lg hover:scale-110 transition">
-                                    <i class="fas fa-play ml-1"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="p-4">
-                            <h4 class="font-bold text-sm">Moto X3M</h4>
-                            <p class="text-[10px] text-gray-500">Racing • Stunts</p>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Tab: Sanctuary TV -->
-            <section id="tv" class="tab-content space-y-6">
-                <div class="glass-panel rounded-3xl p-8 text-center border-indigo-500/30">
-                    <div class="w-20 h-20 bg-indigo-600/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <i class="fas fa-tv text-indigo-400 text-3xl"></i>
-                    </div>
-                    <h2 class="text-3xl font-orbitron font-bold mb-2">Sanctuary TV</h2>
-                    <p class="text-gray-400 max-w-md mx-auto mb-8">Stream your favorite gaming channels directly within the sanctuary. Paste a URL or browse featured content.</p>
-                    <div class="max-w-xl mx-auto flex space-x-2">
-                        <input id="tvUrl" type="text" placeholder="Paste Video URL..." class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500 transition">
-                        <button onclick="launchTV()" class="bg-indigo-600 px-6 py-3 rounded-xl font-bold hover:bg-indigo-500 transition">PLAY</button>
-                    </div>
-                </div>
-            </section>
-
-        </div>
-    </main>
-
-    <!-- AI Assistant UI -->
-    <div id="aiAssistant" class="glass-panel ai-collapsed overflow-hidden shadow-2xl flex flex-col border-indigo-500/50">
-        <!-- AI Header -->
-        <div id="aiHeader" class="bg-indigo-600 p-4 flex items-center justify-between cursor-pointer" onclick="toggleAI()">
-            <div class="flex items-center space-x-3">
-                <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
-                    <i class="fas fa-robot text-white"></i>
-                </div>
-                <div class="ai-header-text hidden">
-                    <h4 class="text-sm font-bold leading-none">NOVA AI</h4>
-                    <span class="text-[10px] text-indigo-200">Sanctuary Guide</span>
-                </div>
-            </div>
-            <i id="aiChevron" class="fas fa-chevron-up text-white text-xs"></i>
-        </div>
-
-        <!-- Chat Body -->
-        <div id="aiBody" class="flex-1 flex flex-col overflow-hidden hidden">
-            <div id="chatBubbles" class="flex-1 p-4 space-y-4 overflow-y-auto chat-bubbles">
-                <div class="flex items-start space-x-2">
-                    <div class="w-6 h-6 bg-indigo-600 rounded-full flex items-center justify-center text-[10px]">AI</div>
-                    <div class="bg-slate-800 rounded-2xl rounded-tl-none p-3 text-xs max-w-[80%]">
-                        Hello! I'm Nova. I can help you find games or suggest something to watch on Sanctuary TV. What's on your mind?
-                    </div>
-                </div>
-            </div>
-
-            <!-- Typing Indicator -->
-            <div id="typingIndicator" class="px-4 py-2 flex space-x-1 hidden">
-                <div class="typing-dot"></div>
-                <div class="typing-dot"></div>
-                <div class="typing-dot"></div>
-            </div>
-
-            <!-- Chat Input -->
-            <div class="p-4 bg-slate-900/50 border-t border-slate-700">
-                <div class="relative">
-                    <input id="aiInput" type="text" placeholder="Ask Nova anything..." 
-                        class="w-full bg-slate-800 border border-slate-700 rounded-xl py-2 pl-4 pr-10 text-xs focus:outline-none focus:border-indigo-500"
-                        onkeypress="if(event.key === 'Enter') sendToAI()">
-                    <button onclick="sendToAI()" class="absolute right-2 top-1/2 -translate-y-1/2 text-indigo-400 hover:text-white transition">
-                        <i class="fas fa-paper-plane"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Game Launching Modal -->
-    <div id="gameModal" class="modal">
-        <div class="glass-panel p-10 rounded-3xl max-w-2xl w-full text-center relative border-indigo-500/50">
-            <button onclick="closeModal()" class="absolute top-6 right-6 text-gray-500 hover:text-white transition">
-                <i class="fas fa-times text-xl"></i>
-            </button>
-            <div id="loadingUI">
-                <div class="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
-                <h3 id="modalTitle" class="text-2xl font-orbitron font-bold mb-2 tracking-widest">LOADING...</h3>
-                <p class="text-gray-400 text-sm">Preparing Sanctuary server for <span id="gameName" class="text-indigo-400 font-bold">Game</span></p>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // Tab switching logic
-        function switchTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-            document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active');
-            
-            // Find the button that was clicked to set it as active
-            const buttons = document.querySelectorAll('.nav-link');
-            buttons.forEach(btn => {
-                if (btn.innerText.toLowerCase().includes(tabId)) {
-                    btn.classList.add('active');
-                }
-            });
+    function loadProxy() {
+        let url = urlInput.value.trim();
+        if (!url) {
+            alert("Please enter a URL");
+            return;
+        }
+        if (!url.startsWith('http')) {
+            url = 'https://' + url;
         }
 
-        // AI Logic
-        let aiOpen = false;
-        function toggleAI() {
-            const ai = document.getElementById('aiAssistant');
-            const headerText = document.querySelector('.ai-header-text');
-            const aiBody = document.getElementById('aiBody');
-            const chevron = document.getElementById('aiChevron');
+        // NOTE: For a real proxy, prepend your backend URL here
+        // const finalUrl = `http://127.0.0.1:8080/?url=${encodeURIComponent(url)}`;
+        const finalUrl = url; 
 
-            if (aiOpen) {
-                ai.classList.remove('ai-expanded');
-                ai.classList.add('ai-collapsed');
-                headerText.classList.add('hidden');
-                aiBody.classList.add('hidden');
-                chevron.classList.replace('fa-chevron-down', 'fa-chevron-up');
-            } else {
-                ai.classList.remove('ai-collapsed');
-                ai.classList.add('ai-expanded');
-                setTimeout(() => {
-                    headerText.classList.remove('hidden');
-                    aiBody.classList.remove('hidden');
-                }, 100);
-                chevron.classList.replace('fa-chevron-up', 'fa-chevron-down');
-            }
-            aiOpen = !aiOpen;
+        gridView.style.display = 'none';
+        proxyView.style.display = 'block';
+        proxyFrame.src = finalUrl;
+        
+        document.querySelector('.status-dot').style.backgroundColor = '#3b82f6';
+    }
+
+    function launchGame(gameTitle) {
+        const game = games.find(g => g.title === gameTitle);
+        if (game) {
+            urlInput.value = game.url;
+            loadProxy();
         }
+    }
 
-        async function sendToAI() {
-            const input = document.getElementById('aiInput');
-            const container = document.getElementById('chatBubbles');
-            const typing = document.getElementById('typingIndicator');
-            const message = input.value.trim();
-            
-            if (!message) return;
+    function resetView() {
+        proxyFrame.src = '';
+        proxyView.style.display = 'none';
+        gridView.style.display = 'grid';
+        urlInput.value = '';
+        document.querySelector('.status-dot').style.backgroundColor = '#22c55e';
+    }
 
-            // Add user message
-            const userMsg = document.createElement('div');
-            userMsg.className = "flex items-start justify-end space-x-2";
-            userMsg.innerHTML = `<div class="bg-indigo-600 rounded-2xl rounded-tr-none p-3 text-xs max-w-[80%]">${message}</div>`;
-            container.appendChild(userMsg);
-            
-            input.value = '';
-            container.scrollTop = container.scrollHeight;
+    // Initialize
+    initGrid();
+    initThemes();
+    applyTheme(themesData[0]); // Apply default theme
+</script>
 
-            // Show typing
-            typing.classList.remove('hidden');
-
-            // Simulate Nova Response
-            setTimeout(() => {
-                typing.classList.add('hidden');
-                const novaMsg = document.createElement('div');
-                novaMsg.className = "flex items-start space-x-2";
-                
-                let response = "";
-                const lowerMsg = message.toLowerCase();
-
-                if (lowerMsg.includes('game') || lowerMsg.includes('play')) {
-                    response = "I highly recommend trying out **Ragdoll Archers**! It has great physics. Or if you want something fast, **Moto X3M** is a classic.";
-                } else if (lowerMsg.includes('tv') || lowerMsg.includes('watch')) {
-                    response = "You can use the **Sanctuary TV** tab to stream videos. Just paste a YouTube link and I'll help you get it set up!";
-                } else if (lowerMsg.includes('hi') || lowerMsg.includes('hello')) {
-                    response = "Hello traveler! I'm here to make your time in the Sanctuary awesome. What can I do for you today?";
-                } else {
-                    response = "That sounds interesting! I'm still learning about all the features here, but I can definitely help you navigate the library or TV sections.";
-                }
-
-                novaMsg.innerHTML = `
-                    <div class="w-6 h-6 bg-indigo-600 rounded-full flex items-center justify-center text-[10px]">AI</div>
-                    <div class="bg-slate-800 rounded-2xl rounded-tl-none p-3 text-xs max-w-[80%]">${response}</div>
-                `;
-                container.appendChild(novaMsg);
-                container.scrollTop = container.scrollHeight;
-            }, 1000);
-        }
-
-        // Game Launching
-        function launchGame(name) {
-            document.getElementById('gameName').innerText = name;
-            document.getElementById('modalTitle').innerText = "SYNCING GAME DATA";
-            document.getElementById('gameModal').classList.add('active-modal');
-            
-            setTimeout(() => {
-                document.getElementById('modalTitle').innerText = name.toUpperCase();
-                document.getElementById('loadingUI').innerHTML = `
-                    <div class="bg-slate-900 rounded-xl p-8 mb-6 border border-slate-800">
-                        <i class="fas fa-gamepad text-5xl text-indigo-500 mb-4"></i>
-                        <p class="text-sm text-gray-300">The game "${name}" is now ready! Open in arena mode?</p>
-                    </div>
-                    <button onclick="closeModal()" class="w-full bg-indigo-600 py-3 rounded-xl font-bold hover:bg-indigo-500 transition shadow-lg uppercase tracking-widest">Enter Arena</button>
-                `;
-            }, 1200);
-        }
-
-        function closeModal() {
-            document.getElementById('gameModal').classList.remove('active-modal');
-            setTimeout(() => {
-                document.getElementById('loadingUI').innerHTML = `
-                    <div class="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
-                    <h3 id="modalTitle" class="text-2xl font-orbitron font-bold mb-2 tracking-widest">LOADING...</h3>
-                    <p class="text-gray-400 text-sm">Preparing Sanctuary server for <span id="gameName" class="text-indigo-400 font-bold">Game</span></p>
-                `;
-            }, 300);
-        }
-
-        function launchTV() {
-            const url = document.getElementById('tvUrl').value;
-            if(url) {
-                launchGame('Sanctuary TV Stream');
-            }
-        }
-    </script>
 </body>
 </html>
